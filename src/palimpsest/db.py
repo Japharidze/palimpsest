@@ -15,6 +15,7 @@ def upsert_companies(conn, rows) -> None:
         cur.execute("""
             INSERT INTO companies (cik, ticker, name)
             SELECT DISTINCT ON (cik) cik, ticker, name FROM temp_companies
+            ORDER BY cik, ticker
             ON CONFLICT (cik) DO UPDATE SET
                 ticker = EXCLUDED.ticker,
                 name = EXCLUDED.name;
