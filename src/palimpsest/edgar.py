@@ -25,3 +25,7 @@ class EdgarClient:
     def company_tickers(self) -> dict[str, Any]:
         url = self.WWW+"/files/company_tickers.json"
         return self._get(url=url)
+
+    def submissions(self, cik: str) -> dict[str, Any]:
+        url = f"{self.DATA}/submissions/CIK{cik}.json"
+        return self._get(url=url)
