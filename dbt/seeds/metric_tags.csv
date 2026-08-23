@@ -1,0 +1,15 @@
+metric,tag,priority
+revenue,RevenueFromContractWithCustomerExcludingAssessedTax,1
+revenue,RevenuesNetOfInterestExpense,2
+revenue,Revenues,3
+revenue,SalesRevenueNet,4
+cost_of_revenue,CostOfRevenue,1
+inventory,InventoryNet,1
+receivables,AccountsReceivableNetCurrent,1
+net_income,NetIncomeLoss,1
+total_assets,Assets,1
+stockholders_equity,StockholdersEquity,1
+stockholders_equity,StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest,2
+cash,CashAndCashEquivalentsAtCarryingValue,1
+operating_cash_flow,NetCashProvidedByUsedInOperatingActivities,1
+operating_cash_flow,NetCashProvidedByUsedInOperatingActivitiesContinuingOperations,2
