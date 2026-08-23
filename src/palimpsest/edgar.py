@@ -29,3 +29,7 @@ class EdgarClient:
     def submissions(self, cik: str) -> dict[str, Any]:
         url = f"{self.DATA}/submissions/CIK{cik}.json"
         return self._get(url=url)
+
+    def company_facts(self, cik) -> dict[str, Any]:
+        url = f"{self.DATA}/api/xbrl/companyfacts/CIK{cik}.json"
+        return self._get(url=url)

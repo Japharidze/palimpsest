@@ -1,7 +1,8 @@
 import json
+from collections.abc import Generator
 from datetime import UTC, datetime
 
-from palimpsest.db import upsert_companies, upsert_filings
+from palimpsest.db import upsert_companies, upsert_facts, upsert_filings
 from palimpsest.edgar import EdgarClient
 
 TRACKED_FORMS = frozenset({
@@ -22,6 +23,24 @@ def _parse_submission(raw: dict, cik: str) -> tuple[str | None, ...]:
             raw['primaryDocument'],
             f"raw/companies/{cik}/filings/{raw['accessionNumber']}/{raw['primaryDocument'].replace('/', '-')}"
         )
+
+def _parse_facts(raw: dict, cik: str) -> Generator[tuple[str | None, ...]]:
+    for taxonomy, tags in raw['facts'].items():
+        for tag, tag_data in tags.items():
+            for unit, facts in tag_data["units"].items():
+                for f in facts:
+                    yield (
+                        cik,
+                        taxonomy,
+                        tag,
+                        unit,
+                        f.get("start"),
+                        f["end"],
+                        f["val"],
+                        f["accn"],
+                        f.get("form"),
+                        f["filed"]
+                    )
 
 
 def refresh_companies(client, storage, conn) -> int:
@@ -49,3 +68,13 @@ def sync_filings(client: EdgarClient, storage, conn, cik) -> int:
     upsert_filings(conn, rows)
 
     return len(rows)
+
+def sync_facts(client: EdgarClient, storage, conn, cik) -> int:
+    raw = client.company_facts(cik)
+
+    key = f"raw/companies/{cik}/facts/{datetime.now(tz=UTC).date().isoformat()}.json"
+    storage.put(key, json.dumps(raw).encode())
+
+    row_number = upsert_facts(conn, _parse_facts(raw, cik))
+
+    return row_number

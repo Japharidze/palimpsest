@@ -106,3 +106,68 @@ def upsert_filings(conn, rows) -> None:
             FROM temp_filings
             ON CONFLICT (accession_number) DO NOTHING;
         """)
+
+def upsert_facts(conn, rows) -> int:
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TEMP TABLE temp_facts (
+                cik text,
+                taxonomy text,
+                tag text,
+                unit text,
+                start_date date,
+                end_date date,
+                val numeric,
+                accn text,
+                form text,
+                filed date
+            ) ON COMMIT DROP;
+        """)
+
+        with cur.copy("""
+            COPY temp_facts (
+                cik,
+                taxonomy,
+                tag,
+                unit,
+                start_date,
+                end_date,
+                val,
+                accn,
+                form,
+                filed
+            ) FROM STDIN
+        """) as copy:
+           for r in rows:
+               copy.write_row(r)
+
+        cur.execute("""
+            INSERT INTO xbrl_facts (
+                cik,
+                taxonomy,
+                tag,
+                unit,
+                start_date,
+                end_date,
+                val,
+                accn,
+                form,
+                filed
+            )
+            SELECT 
+                cik,
+                taxonomy,
+                tag,
+                unit,
+                start_date,
+                end_date,
+                val,
+                accn,
+                form,
+                filed
+            FROM temp_facts
+            ON CONFLICT (cik, taxonomy, tag, unit, accn, end_date, start_date) DO NOTHING;
+        """)
+        inserted = cur.rowcount
+
+    return inserted
