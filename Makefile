@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: db up down migrate fresh
+.PHONY: db up down migrate fresh dbt dbt-seed
 
 up:
 	docker compose up -d
