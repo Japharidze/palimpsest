@@ -1,8 +1,12 @@
-create table if not exists companies (
-    cik            text        primary key,
-    ticker         text        not null,
-    name           text        not null,
-    last_seen_at   timestamptz not null default now()
+create table companies (
+    cik  text primary key,
+    name text not null
 );
 
-create index if not exists companies_ticker_idx on companies (ticker);
+create table company_tickers (
+    cik    text not null references companies (cik),
+    ticker text not null,
+    primary key (cik, ticker)
+);
+
+create index company_tickers_ticker_idx on company_tickers (ticker);

@@ -1,11 +1,42 @@
+def add_to_watchlist(conn, tickers: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """Add tickers to the watchlist.
+
+    Returns (added, already_watching, not_found), all as tickers.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            "select ticker, cik from company_tickers where ticker = any(%s)",
+            (tickers,),
+        )
+        resolved = dict(cur.fetchall())          # ticker -> cik
+
+        not_found = [t for t in tickers if t not in resolved]
+        if not resolved:
+            return [], [], not_found
+
+        cur.execute(
+            """
+            insert into watchlist (cik)
+            select unnest(%s::text[])
+            on conflict (cik) do nothing
+            returning cik
+            """,
+            (list(resolved.values()),),
+        )
+        inserted_ciks = {row[0] for row in cur.fetchall()}
+
+    added = [t for t, c in resolved.items() if c in inserted_ciks]
+    already = [t for t, c in resolved.items() if c not in inserted_ciks]
+    return added, already, not_found
+
 def upsert_companies(conn, rows) -> None:
     with conn.cursor() as cur:
         cur.execute("""
-            CREATE TEMP TABLE temp_companies (
+            create temp table temp_companies (
                 cik text,
                 ticker text,
                 name text
-            ) ON COMMIT DROP;
+            ) on commit drop
         """)
 
         with cur.copy("COPY temp_companies (cik, ticker, name) FROM STDIN") as copy:
@@ -13,12 +44,17 @@ def upsert_companies(conn, rows) -> None:
                 copy.write_row(r)
 
         cur.execute("""
-            INSERT INTO companies (cik, ticker, name)
-            SELECT DISTINCT ON (cik) cik, ticker, name FROM temp_companies
-            ORDER BY cik, ticker
-            ON CONFLICT (cik) DO UPDATE SET
-                ticker = EXCLUDED.ticker,
-                name = EXCLUDED.name;
+            insert into companies (cik, name)
+            select distinct on (cik) cik, name
+            from temp_companies
+            order by cik, ticker
+            on conflict (cik) do update set name = excluded.name
+        """)
+
+        cur.execute("""
+            insert into company_tickers (cik, ticker)
+            select distinct cik, ticker from temp_companies
+            on conflict (cik, ticker) do nothing
         """)
 
 def upsert_filings(conn, rows) -> None:

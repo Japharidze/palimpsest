@@ -3,6 +3,7 @@ import typer
 from psycopg.rows import scalar_row
 
 from palimpsest.config import DATA_DIR, settings
+from palimpsest.db import add_to_watchlist
 from palimpsest.edgar import EdgarClient
 from palimpsest.ingest import refresh_companies, sync_filings
 from palimpsest.migrate import apply_migrations
@@ -25,6 +26,20 @@ def migrate() -> None:
     if not applied:
         typer.echo("nothing to apply")
 
+@app.command("watch")
+def watch_cmd(tickers: list[str]) -> None:
+    """Add companies to the watchlist by ticker."""
+    tickers = [t.upper() for t in tickers]
+
+    with psycopg.connect(settings.db_url) as conn:
+        added, already, not_found = add_to_watchlist(conn, tickers)
+
+    if added:
+        typer.echo(f"added: {', '.join(added)}")
+    if already:
+        typer.echo(f"already watching: {', '.join(already)}")
+    if not_found:
+        typer.echo(f"not found: {', '.join(not_found)}")
 
 @app.command("refresh-companies")
 def refresh_companies_cmd() -> None:
