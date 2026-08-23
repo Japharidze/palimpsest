@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: public
+    tables:
+      - name: companies
+      - name: company_tickers
+      - name: filings
+      - name: xbrl_facts
+      - name: watchlist
+
+

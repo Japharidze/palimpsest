@@ -18,6 +18,11 @@ psql:
 migrate:
 	uv run palim migrate
 
+dbt:
+	cd dbt && DBT_PROFILES_DIR=. uv run dbt run
+dbt-test:
+	cd dbt && DBT_PROFILES_DIR=. uv run dbt test
+
 reset:
 	docker compose down -v
 	docker compose up -d

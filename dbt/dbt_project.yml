@@ -1,0 +1,14 @@
+name: palimpsest
+version: 0.1.0
+profile: palimpsest
+
+model-paths: ["models"]
+
+models:
+  palimpsest:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: table
+    marts:
+      +materialized: table
