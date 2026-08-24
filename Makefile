@@ -32,7 +32,7 @@ reset:
 
 init-data:
 	uv run palim refresh-companies
-	uv run palim watch NVDA MSFT GOOGL LLY KO XOM JPM ASML RDDT
+	uv run palim watch NVDA MSFT GOOGL LLY KO JPM ASML RDDT
 
 sync:
 	uv run palim sync-filings
