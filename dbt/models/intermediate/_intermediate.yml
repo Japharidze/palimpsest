@@ -1,0 +1,20 @@
+models:
+  - name: int_facts_current
+    description: >
+      One row per company, tag and period, keeping the most recently filled
+      value. Earlier versions of restated figures are dropped here and
+      preserved in staging.
+  
+  - name: int_metrics_reported
+    description: >
+      Facts resolved to metric names via the tag mapping. Where a company
+      reports several mapped tags for one period, the lowest priority number wins.
+
+  - name: int_metrics_q4
+    description: >
+      Further-quarter flows computed as the annual figure minus the three
+      reported quarters. Only produced where exactly three quarters exist.
+
+  - name: int_metrics
+    description: Reported and derived metrics combined
+

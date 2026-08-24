@@ -23,6 +23,9 @@ dbt:
 	cd dbt && DBT_PROFILES_DIR=. uv run dbt run
 dbt-test:
 	cd dbt && DBT_PROFILES_DIR=. uv run dbt test
+dbt-docs:
+	cd dbt && DBT_PROFILES_DIR=. uv run dbt docs generate
+	cd dbt && DBT_PROFILES_DIR=. uv run dbt docs serve
 
 reset:
 	docker compose down -v

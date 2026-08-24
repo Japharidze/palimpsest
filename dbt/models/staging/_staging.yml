@@ -1,0 +1,9 @@
+models:
+  - name: stg_xbrl_facts
+    description: >
+      XBRL facts with each period classified as an instant (a balance at a point in time) or a duration of quarter, half-year or year length.
+    columns:
+      - name: period_type
+        description: instant, quarter, half_year, year, or other derived from the period length
+      - name: duration
+        description: Days between start and end; null for instants

@@ -2,8 +2,54 @@ version: 2
 
 models:
   - name: fct_company_quarter
+    description: >
+      One row per company per fiscal quarter, with each metric as column.
+      Flow metrics cover the quarter; balance metrics are the value at this
+      end. Fourth-quarter flows may be derived rather than reported.
     columns:
       - name: cik
         tests: [not_null]
       - name: period_end
         tests: [not_null]
+      - name: revenue_is_derived
+        description: True when the value was computed from the annual figure rather than reported.
+
+  - name: fct_company_year
+    description: >
+      Quarterly metrics with ratios, year-over-year growth, and red-flag
+      columns. One row per company per quarter, most recent first.
+    columns:
+      - name: cik
+        tests: [not_null]
+      - name: period_end
+        tests: [not_null]
+
+  - name: rpt_company_quarter
+    description: >
+      Quarterly metrics with ratios, year-over-year growth, and red-flag
+      columns. One row per company per quarter, most recent first.
+    columns:
+      - name: gross_margin
+        description: Revenue less cost of revenue, over revenue.
+      - name: roa
+        description: Net income over average total assets for the quarter.
+      - name: roe
+        description: Net income over average shareholders' qeuity for the quarter.
+      - name: runway_quarters
+        description: Cash divided by the quarter's operating outflow; null unless cash flow is negative.
+      - name: flag_margin_compression
+        description: Gross margin fell more than 200 basis points against the same quarter last year.
+      - name: flag_inventory_buildup
+        description: Inventory grew more than 10 points faster than revenue year over year.
+      - name: flag_receivables_buildup
+        description: Receivables grew more than 10 points faster than revenue year over year.
+
+  - name: rpt_restatements
+    description: >
+      Periods where a company reported more than one value from the same
+      metric across filings, with the size of the change.
+    columns:
+      - name: version_count
+        description: Number of distinct values reported for this period.
+      - name: change_pct
+        description: Change from the smallest reported value to the largest.

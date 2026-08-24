@@ -5,9 +5,14 @@ sources:
     schema: public
     tables:
       - name: companies
+        description: Filers from EDGAR's ticker mapping, one row per CIK.
       - name: company_tickers
+        description: Every ticker a filer trades under; a CIK can have several.
       - name: filings
+        description: One row per filing submission, from each company's EDGAR index.
       - name: xbrl_facts
+        description: Every tagged figure a company has reported, once per filing that reported it.
       - name: watchlist
+        description: Companies currently tracked.
 
 
