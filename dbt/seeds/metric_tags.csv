@@ -3,6 +3,7 @@ revenue,RevenueFromContractWithCustomerExcludingAssessedTax,1
 revenue,RevenuesNetOfInterestExpense,2
 revenue,Revenues,3
 revenue,SalesRevenueNet,4
+revenue,SalesRevenueGoodsNet,5
 cost_of_revenue,CostOfRevenue,1
 inventory,InventoryNet,1
 receivables,AccountsReceivableNetCurrent,1
