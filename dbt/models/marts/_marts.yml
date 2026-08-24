@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: fct_company_quarter
+    columns:
+      - name: cik
+        tests: [not_null]
+      - name: period_end
+        tests: [not_null]
