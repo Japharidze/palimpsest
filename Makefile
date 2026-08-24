@@ -19,9 +19,8 @@ migrate:
 	uv run palim migrate
 
 dbt:
-	cd dbt && DBT_PROFILES_DIR=. uv run dbt run
-dbt-seed:
 	cd dbt && DBT_PROFILES_DIR=. uv run dbt seed
+	cd dbt && DBT_PROFILES_DIR=. uv run dbt run
 dbt-test:
 	cd dbt && DBT_PROFILES_DIR=. uv run dbt test
 
