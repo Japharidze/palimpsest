@@ -19,9 +19,10 @@ git clone https://github.com/<user>/palimpsest.git
 cd palimpsest
 cp .env.example .env      # then edit SEC_USER_AGENT
 uv sync
-docker compose up -d
-uv run palim migrate
+make fresh
 ```
+
+`make fresh` starts Postgres, applies migrations, loads the watchlist, syncs filings and XBRL facts from EDGAR, and builds the dbt models.
 
 `SEC_USER_AGENT` must contain a real contact email. The SEC requires it on every request and throttles clients that omit it. No account or API key is needed.
 
@@ -30,15 +31,25 @@ uv run palim migrate
 ```bash
 uv run palim migrate             # apply pending schema migrations
 uv run palim refresh-companies   # load the ticker to CIK mapping from EDGAR
+uv run palim watch NVDA MSFT     # add companies to the watchlist
+uv run palim sync-filings        # index each watched company's filings
+uv run palim sync-facts          # load XBRL facts
+make dbt                         # build the metric models
+make dbt-test                    # run data quality tests
 ```
-
-More commands land as the pipeline grows.
 
 ## How it works
 
-Raw API responses are written to storage before anything parses them, so a parser change can be replayed without refetching. Postgres holds the parsed result. Schema changes are numbered SQL files applied in order and recorded in a `schema_migrations` table.
+Raw API responses are written to storage before anything parses them, so a parser change can be replayed without refetching. Postgres holds the parsed result. Schema changes are numbered SQL files applied in order and recorded in a `schema_migrations` table. dbt turns raw XBRL facts into per-quarter and per-year metrics with ratios, growth rates, and red-flag columns.
 
 Read [docs/architecture.md](docs/architecture.md) for the layer-by-layer design, and [docs/decisions.md](docs/decisions.md) for the tradeoffs behind it.
+
+## Limitations
+
+- **US GAAP only.** The tag-to-metric mapping covers `us-gaap`. IFRS filers are not mapped.
+- **Share classes.** A filer with several tickers keeps one; looking up a company by a ticker that lost the tie-break returns nothing.
+- **Annual-only filers.** Foreign private issuers file 20-F and no 10-Q, so they appear in the yearly metrics and not the quarterly ones.
+- **Ticker resolution.** After a restructuring a ticker can point at a newly registered entity whose filing history sits under a predecessor CIK.
 
 ## Data source
 
