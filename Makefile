@@ -30,7 +30,7 @@ reset:
 	until docker compose exec -T postgres pg_isready -U $(POSTGRES_USER) -q; do sleep 1; done
 	$(MAKE) migrate
 
-seed:
+init-data:
 	uv run palim refresh-companies
 	uv run palim watch NVDA MSFT GOOGL LLY KO XOM JPM ASML RDDT
 
@@ -38,4 +38,4 @@ sync:
 	uv run palim sync-filings
 	uv run palim sync-facts
 
-fresh: reset seed sync
+fresh: reset init-data sync dbt
