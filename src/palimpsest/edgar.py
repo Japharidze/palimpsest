@@ -13,14 +13,18 @@ class EdgarClient:
         self._min_interval = min_interval
         self._last = 0.0
 
-    def _get(self, url: str) -> dict:
+    def _request(self, url: str) -> httpx.Response:
         wait = self._min_interval - (time.monotonic() - self._last) # Guard the min_interval time between the requests
         if wait > 0:
             time.sleep(wait)
         r = self._c.get(url)
         self._last = time.monotonic()
         r.raise_for_status()
-        return r.json()
+        return r
+
+
+    def _get(self, url: str) -> dict:
+        return self._request(url).json()
 
     def company_tickers(self) -> dict[str, Any]:
         url = self.WWW+"/files/company_tickers.json"
@@ -38,7 +42,7 @@ class EdgarClient:
         self, cik: str, accession_number: str, document_name: str
     ) -> bytes:
         url = f"{self.WWW}/Archives/edgar/data/{int(cik)}/{accession_number.replace('-', '')}/{document_name}"
-        response = self._c.get(url)
+        response = self._request(url)
         response.raise_for_status()
 
         return response.content
