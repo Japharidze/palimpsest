@@ -1,12 +1,13 @@
 import psycopg
 import typer
 from psycopg.rows import scalar_row
+from httpx import HTTPStatusError
 
 from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist
 from palimpsest.edgar import EdgarClient
 from palimpsest.ingest import (
-    fetch_documents,
+    fetch_document,
     refresh_companies,
     sync_facts,
     sync_filings,
@@ -85,8 +86,6 @@ def fetch_documents_cmd() -> None:
             cur.execute("""
                 select
                     f.cik,
-                    f.form,
-                    f.filing_date,
                     f.accession_number,
                     f.primary_document,
                     f.document_key
@@ -96,11 +95,22 @@ def fetch_documents_cmd() -> None:
             filings = cur.fetchall()
 
         count = 0
-        for filing in filings:
-            fetch_documents(client, storage, conn, *filing)
-            conn.commit()
-            count += 1
+        failed = []
+        for cik, accession, primary_doc, doc_key in filings:
+            try:
+                fetch_document(
+                    client, storage, conn, cik, accession, primary_doc, doc_key
+                )
+                conn.commit()
+                count += 1
+            except HTTPStatusError as e:
+                conn.rollback()
+                failed.append((accession, e.response.status_code))
         typer.echo(f"{count} documents fetched for clients in watchlist")
+        if failed:
+            typer.echo(f"{len(failed)} failed:")
+            for accession, status in failed:
+                typer.echo(f"   {accession} - HTTP {status}")
 
 @app.command("sync-facts")
 def sync_facts_cmd() -> None:

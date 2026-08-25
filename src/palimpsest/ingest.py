@@ -79,13 +79,11 @@ def sync_facts(client: EdgarClient, storage, conn, cik) -> int:
 
     return row_number
 
-def fetch_documents(
+def fetch_document(
     client: EdgarClient,
     storage,
     conn,
     cik: str,
-    form: str,
-    filing_date: datetime,
     accession_number: str,
     primary_document: str,
     document_key: str,
@@ -97,5 +95,5 @@ def fetch_documents(
         cur.execute("""
             UPDATE filings
             set fetched_at = %s
-            where cik = %s and form = %s and filing_date = %s
-        """, (datetime.now(tz=UTC), cik, form, filing_date))
+            where accession_number = %s
+        """, (datetime.now(tz=UTC), accession_number))
