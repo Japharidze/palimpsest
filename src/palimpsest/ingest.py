@@ -78,3 +78,24 @@ def sync_facts(client: EdgarClient, storage, conn, cik) -> int:
     row_number = upsert_facts(conn, _parse_facts(raw, cik))
 
     return row_number
+
+def fetch_documents(
+    client: EdgarClient,
+    storage,
+    conn,
+    cik: str,
+    form: str,
+    filing_date: datetime,
+    accession_number: str,
+    primary_document: str,
+    document_key: str,
+) -> None:
+    html_bytes = client.fetch_document(cik, accession_number, primary_document)
+    storage.put(document_key, html_bytes)
+
+    with conn.cursor() as cur:
+        cur.execute("""
+            UPDATE filings
+            set fetched_at = %s
+            where cik = %s and form = %s and filing_date = %s
+        """, (datetime.now(tz=UTC), cik, form, filing_date))

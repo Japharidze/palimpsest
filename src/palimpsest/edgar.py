@@ -33,3 +33,12 @@ class EdgarClient:
     def company_facts(self, cik) -> dict[str, Any]:
         url = f"{self.DATA}/api/xbrl/companyfacts/CIK{cik}.json"
         return self._get(url=url)
+
+    def fetch_document(
+        self, cik: str, accession_number: str, document_name: str
+    ) -> bytes:
+        url = f"{self.WWW}/Archives/edgar/data/{int(cik)}/{accession_number.replace('-', '')}/{document_name}"
+        response = self._c.get(url)
+        response.raise_for_status()
+
+        return response.content

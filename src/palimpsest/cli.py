@@ -5,7 +5,12 @@ from psycopg.rows import scalar_row
 from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist
 from palimpsest.edgar import EdgarClient
-from palimpsest.ingest import refresh_companies, sync_facts, sync_filings
+from palimpsest.ingest import (
+    fetch_documents,
+    refresh_companies,
+    sync_facts,
+    sync_filings,
+)
 from palimpsest.migrate import apply_migrations
 from palimpsest.storage import LocalStorage
 
@@ -68,6 +73,34 @@ def sync_filings_cmd() -> None:
             count = sync_filings(client, storage, conn, cik)
             conn.commit()
             typer.echo(f"{count} documents for client with CIK - {cik}")
+
+@app.command("fetch-documents")
+def fetch_documents_cmd() -> None:
+    """Fetch documents from filings"""
+    client = EdgarClient(settings.sec_user_agent)
+    storage = LocalStorage(DATA_DIR)
+
+    with psycopg.connect(settings.db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                select
+                    f.cik,
+                    f.form,
+                    f.filing_date,
+                    f.accession_number,
+                    f.primary_document,
+                    f.document_key
+                from filings f join watchlist w on f.cik = w.cik
+                where f.fetched_at is null
+            """)
+            filings = cur.fetchall()
+
+        count = 0
+        for filing in filings:
+            fetch_documents(client, storage, conn, *filing)
+            conn.commit()
+            count += 1
+        typer.echo(f"{count} documents fetched for clients in watchlist")
 
 @app.command("sync-facts")
 def sync_facts_cmd() -> None:
