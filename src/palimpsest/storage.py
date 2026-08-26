@@ -15,3 +15,9 @@ class LocalStorage:
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
+
+    def get(self, key: str) -> bytes:
+        path = self._path(key)
+        with open(path, "rb") as f:
+            content = f.read()
+        return content

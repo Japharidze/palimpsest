@@ -1,7 +1,7 @@
 import psycopg
 import typer
-from psycopg.rows import scalar_row
 from httpx import HTTPStatusError
+from psycopg.rows import scalar_row
 
 from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist
@@ -13,6 +13,7 @@ from palimpsest.ingest import (
     sync_filings,
 )
 from palimpsest.migrate import apply_migrations
+from palimpsest.sections import extract_sections
 from palimpsest.storage import LocalStorage
 
 app = typer.Typer(
@@ -129,6 +130,31 @@ def sync_facts_cmd() -> None:
             conn.commit()
             typer.echo(f"{count} facts for client with CIK - {cik}")
 
+@app.command("extract-sections")
+def extract_sections_cmd() -> None:
+    """Parse all fetched documents and store the text content"""
+    storage = LocalStorage(DATA_DIR)
+
+    with psycopg.connect(settings.db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                select
+                    accession_number,
+                    form,
+                    document_key
+                from filings
+                where
+                    fetched_at is not null
+                    and parsed_at is null
+                    and form = '10-K'
+            """)
+            documents = cur.fetchall()
+
+        section_count = 0
+        for accn, form, key in documents:
+            section_count += extract_sections(storage, conn, accn, form, key)
+            conn.commit()
+        typer.echo(f"{section_count} sections extracted")
 
 def main() -> None:
     app()

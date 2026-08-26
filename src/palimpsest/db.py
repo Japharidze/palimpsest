@@ -171,3 +171,44 @@ def upsert_facts(conn, rows) -> int:
         inserted = cur.rowcount
 
     return inserted
+
+def upsert_sections(conn, rows) -> int:
+    with conn.cursor() as cur:
+        cur.execute("""
+            create temp table temp_sections (
+                accession_number text,
+                section text,
+                content text,
+                start_offset int,
+                end_offset int,
+                confidence numeric,
+                detection_method text
+            ) on commit drop
+        """)
+
+        with cur.copy("""COPY temp_sections (
+                        accession_number,
+                        section,
+                        content,
+                        start_offset,
+                        end_offset,
+                        confidence,
+                        detection_method) FROM STDIN
+                      """) as copy:
+            for r in rows:
+                copy.write_row(r)
+
+        cur.execute("""
+            insert into filing_sections (accession_number, section, content, start_offset, end_offset, confidence,
+            detection_method)
+            select accession_number, section, content, start_offset, end_offset, confidence, detection_method from temp_sections
+            on conflict (accession_number, section) do update set 
+                content          = excluded.content,
+                start_offset     = excluded.start_offset,
+                end_offset       = excluded.end_offset,
+                confidence       = excluded.confidence,
+                detection_method = excluded.detection_method
+        """)
+        inserted = cur.rowcount
+        
+        return inserted
