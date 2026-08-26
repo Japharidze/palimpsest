@@ -146,7 +146,6 @@ def extract_sections_cmd() -> None:
                 where
                     fetched_at is not null
                     and parsed_at is null
-                    and form = '10-K'
             """)
             documents = cur.fetchall()
 

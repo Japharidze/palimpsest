@@ -14,5 +14,6 @@ sources:
         description: Every tagged figure a company has reported, once per filing that reported it.
       - name: watchlist
         description: Companies currently tracked.
-
+      - name: filing_sections
+        description: Parsed sections for every document and every availible section provided by edgartools
 
