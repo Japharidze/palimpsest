@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs
+.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs, psql, dbt-test, reset, init-data, sync, analyze
 
 up:
 	docker compose up -d
@@ -42,6 +42,8 @@ sync:
 	uv run palim sync-facts
 	uv run palim fetch-documents
 	uv run palim extract-sections
+
+analyze:
 	uv run palim diff-sections
 
-fresh: reset init-data sync dbt
+fresh: reset init-data sync dbt analyze
