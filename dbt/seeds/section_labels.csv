@@ -5,16 +5,10 @@ form,section_key,label
 10-K,legal_proceedings,legal_proceedings
 10-K,controls_procedures,controls
 10-K,cybersecurity,cybersecurity
-10-K,part_ii_item_8,financial_statements
 10-Q,part_i_item_2,mda
 10-Q,part_ii_item_1a,risk_factors
 10-Q,part_ii_item_1,legal_proceedings
 10-Q,part_i_item_4,controls
-10-Q,part_i_item_1,financial_statements
-20-F,item_3,risk_factors
-20-F,item_4,business
-20-F,item_5,mda
-20-F,item_15,controls
 S-1,risk_factors,risk_factors
 S-1,mda,mda
 S-1,business,business

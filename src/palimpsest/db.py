@@ -215,3 +215,24 @@ def upsert_sections(conn, rows) -> int:
         inserted = cur.rowcount
         
         return inserted
+
+def upsert_section_changes(conn, rows) -> int:
+    if not rows:
+        return 0
+    with conn.cursor() as cur:
+        cur.execute("""
+            delete from section_changes
+            where from_accession = %s and to_accession = %s and label = %s
+        """, (rows[0][3], rows[0][4], rows[0][2]))
+
+        with cur.copy("""
+            COPY section_changes (
+                cik, form, label, from_accession, to_accession,
+                change_type, from_text, to_text, similarity, position
+            ) FROM STDIN
+        """) as copy:
+            for r in rows:
+                copy.write_row(r)
+
+        inserted = cur.rowcount
+    return inserted

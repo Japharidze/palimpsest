@@ -42,5 +42,6 @@ sync:
 	uv run palim sync-facts
 	uv run palim fetch-documents
 	uv run palim extract-sections
+	uv run palim diff-sections
 
 fresh: reset init-data sync dbt

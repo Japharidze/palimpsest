@@ -5,6 +5,7 @@ from psycopg.rows import scalar_row
 
 from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist
+from palimpsest.diffing import sync_changes
 from palimpsest.edgar import EdgarClient
 from palimpsest.ingest import (
     fetch_document,
@@ -154,6 +155,50 @@ def extract_sections_cmd() -> None:
             section_count += extract_sections(storage, conn, accn, form, key)
             conn.commit()
         typer.echo(f"{section_count} sections extracted")
+
+@app.command("diff-sections")
+def diff_sections_cmd() -> None:
+    """Find differences in the last and previous submissions of each form and section"""
+    with psycopg.connect(settings.db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                select
+                	distinct on
+                	(f.cik,
+                    f.form,
+                	sfs.label)
+                	f.cik,
+                	f.form,
+                	sfs.label,
+                	sfs.accession_number,
+                	sfs.content,
+                	lag(sfs.accession_number) over (
+                		partition by f.cik, f.form, sfs.label
+                		order by f.filing_date
+                	) prev_accession_number,
+                	lag(sfs.content) over (
+                		partition by f.cik, f.form, sfs.label
+                		order by f.filing_date
+                	) prev_content
+                from
+                	filings f
+                join analytics.stg_filing_sections sfs
+                	using (accession_number)
+                where
+                	sfs.label is not null
+                order by
+                	f.cik,
+                    f.form,
+                	sfs.label,
+                	f.filing_date desc
+            """)
+            to_compare = cur.fetchall()
+
+        for row in to_compare:
+            count = sync_changes(conn, *row)
+            conn.commit()
+            typer.echo(f"{count} differences found for company - {row[0]}'s section of {row[2]}")
+
 
 def main() -> None:
     app()
