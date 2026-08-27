@@ -173,6 +173,9 @@ def upsert_facts(conn, rows) -> int:
     return inserted
 
 def upsert_sections(conn, rows) -> int:
+    if not rows:
+        return 0
+
     with conn.cursor() as cur:
         cur.execute("""
             create temp table temp_sections (

@@ -5,10 +5,12 @@ form,section_key,label
 10-K,legal_proceedings,legal_proceedings
 10-K,controls_procedures,controls
 10-K,cybersecurity,cybersecurity
+10-K,part_ii_item_8,financial_statements
 10-Q,part_i_item_2,mda
 10-Q,part_ii_item_1a,risk_factors
 10-Q,part_ii_item_1,legal_proceedings
 10-Q,part_i_item_4,controls
+10-Q,part_i_item_1,financial_statements
 20-F,item_3,risk_factors
 20-F,item_4,business
 20-F,item_5,mda
@@ -18,3 +20,9 @@ S-1,mda,mda
 S-1,business,business
 S-1,use_of_proceeds,use_of_proceeds
 S-1,dilution,dilution
+8-K,item_202,results_of_operations
+8-K,item_401,auditor_change
+8-K,item_402,restatement
+8-K,item_502,officer_change
+8-K,item_701,unregistered_equity_sale
+8-K,item_801,other_events

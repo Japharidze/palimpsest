@@ -1,4 +1,4 @@
-select s.*, l.label
+select f.form, s.*, l.label
 from {{ source('raw', 'filing_sections') }} s
 join {{ source('raw', 'filings') }} f using (accession_number)
 left join {{ ref('section_labels') }} l
