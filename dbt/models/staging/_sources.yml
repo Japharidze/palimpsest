@@ -16,4 +16,8 @@ sources:
         description: Companies currently tracked.
       - name: filing_sections
         description: Parsed sections for every document and every availible section provided by edgartools
+      - name: section_changes
+        description: Calculated diffs for section changes
+      - name: change_summaries
+        description: LLM summarization of changes from section_changes
 
