@@ -1,10 +1,11 @@
 import psycopg
 import typer
+from typer import progressbar
 from httpx import HTTPStatusError
 from psycopg.rows import scalar_row
 
 from palimpsest.config import DATA_DIR, settings
-from palimpsest.db import add_to_watchlist
+from palimpsest.db import add_to_watchlist, upsert_change_summaries
 from palimpsest.diffing import sync_changes
 from palimpsest.edgar import EdgarClient
 from palimpsest.ingest import (
@@ -13,14 +14,13 @@ from palimpsest.ingest import (
     sync_facts,
     sync_filings,
 )
+from palimpsest.llm import OllamaLLM
 from palimpsest.migrate import apply_migrations
 from palimpsest.sections import extract_sections
 from palimpsest.storage import LocalStorage
+from palimpsest.summarize import summarize_label_changes
 
-app = typer.Typer(
-        help="SEC filings research assistant",
-        no_args_is_help=True
-        )
+app = typer.Typer(help="SEC filings research assistant", no_args_is_help=True)
 
 
 @app.command("migrate")
@@ -33,6 +33,7 @@ def migrate() -> None:
         typer.echo(f"applied {version}")
     if not applied:
         typer.echo("nothing to apply")
+
 
 @app.command("watch")
 def watch_cmd(tickers: list[str]) -> None:
@@ -49,6 +50,7 @@ def watch_cmd(tickers: list[str]) -> None:
     if not_found:
         typer.echo(f"not found: {', '.join(not_found)}")
 
+
 @app.command("refresh-companies")
 def refresh_companies_cmd() -> None:
     """Refresh the company/ticker mapping from EDGAR."""
@@ -59,6 +61,7 @@ def refresh_companies_cmd() -> None:
         count = refresh_companies(client, storage, conn)
 
     typer.echo(f"{count} companies")
+
 
 @app.command("sync-filings")
 def sync_filings_cmd() -> None:
@@ -76,6 +79,7 @@ def sync_filings_cmd() -> None:
             count = sync_filings(client, storage, conn, cik)
             conn.commit()
             typer.echo(f"{count} documents for client with CIK - {cik}")
+
 
 @app.command("fetch-documents")
 def fetch_documents_cmd() -> None:
@@ -114,6 +118,7 @@ def fetch_documents_cmd() -> None:
             for accession, status in failed:
                 typer.echo(f"   {accession} - HTTP {status}")
 
+
 @app.command("sync-facts")
 def sync_facts_cmd() -> None:
     """Fill facts for clients in watchlist"""
@@ -130,6 +135,7 @@ def sync_facts_cmd() -> None:
             count = sync_facts(client, storage, conn, cik)
             conn.commit()
             typer.echo(f"{count} facts for client with CIK - {cik}")
+
 
 @app.command("extract-sections")
 def extract_sections_cmd() -> None:
@@ -155,6 +161,7 @@ def extract_sections_cmd() -> None:
             section_count += extract_sections(storage, conn, accn, form, key)
             conn.commit()
         typer.echo(f"{section_count} sections extracted")
+
 
 @app.command("diff-sections")
 def diff_sections_cmd() -> None:
@@ -197,7 +204,38 @@ def diff_sections_cmd() -> None:
         for row in to_compare:
             count = sync_changes(conn, *row)
             conn.commit()
-            typer.echo(f"{count} differences found for company - {row[0]}'s section of {row[2]}")
+            typer.echo(
+                f"{count} differences found for company - {row[0]}'s section of {row[2]}"
+            )
+
+
+@app.command("summarize-changes")
+def summarize_changes_cmd() -> None:
+    """Generate summary of each label change using the prefered LLM service"""
+    llm = OllamaLLM()
+    with psycopg.connect(settings.db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                select
+                    distinct on (s.text_hash)
+                    s.text_hash,
+                    s.label,
+                    s.change_type,
+                    s.from_text,
+                    s.to_text
+                from section_changes s
+                left join change_summaries cs using (text_hash)
+                where cs.text_hash is null
+            """)
+            changes = cur.fetchall()
+
+        count = 0
+        with progressbar(summarize_label_changes(llm, changes=changes), length=len(changes)) as progress:
+            for summary in progress:
+                upsert_change_summaries(conn, summary)
+                conn.commit()
+                count += 1
+        typer.echo(f"{count} summaries inserted")
 
 
 def main() -> None:

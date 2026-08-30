@@ -236,3 +236,14 @@ def upsert_section_changes(conn, rows) -> int:
 
         inserted = cur.rowcount
     return inserted
+
+def upsert_change_summaries(conn, row: tuple) -> None:
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO change_summaries
+                (text_hash, summary, model, created_at)
+            VALUES
+                (%s, %s, %s, %s);
+        """, row
+        )
+

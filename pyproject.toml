@@ -12,6 +12,7 @@ dependencies = [
     "edgartools>=5.53.0",
     "httpx>=0.28.1",
     "lxml>=6.1.2",
+    "ollama>=0.6.2",
     "psycopg[binary]>=3.3.4",
     "pydantic-settings>=2.15.0",
     "typer>=0.27.1",
