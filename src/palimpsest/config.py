@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ROOT = Path(__file__).resolve().parents[2]   # src/palimpsest/config.py -> repo root
+ROOT = Path(__file__).resolve().parents[2]  # src/palimpsest/config.py -> repo root
 MIGRATIONS_DIR = ROOT / "migrations"
 DATA_DIR = ROOT / "data"
 
@@ -18,6 +18,10 @@ class Settings(BaseSettings):
 
     sec_user_agent: str
 
+    summarizer_provider: str
+    summarizer_model: str
+    anthropic_api_key: str | None  # only needed when provider is anthropic
+
     @property
     def db_url(self) -> str:
         return (
@@ -26,4 +30,4 @@ class Settings(BaseSettings):
         )
 
 
-settings = Settings()   # type: ignore[call-arg]
+settings = Settings()  # type: ignore[call-arg]

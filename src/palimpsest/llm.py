@@ -18,7 +18,7 @@ class LLM(Protocol):
 
 
 class OllamaLLM:
-    def __init__(self, model: str = "qwen3:8b", host: str = "http://localhost:11434"):
+    def __init__(self, model: str, host: str = "http://localhost:11434"):
         self._model = model
         self._client = Client(host=host)
 
@@ -33,4 +33,6 @@ class OllamaLLM:
         )
 
 
-class AnthropicLLM: ...
+class AnthropicLLM:
+    def __init__(self, model: str, api_key: str): ...
+    def complete(self, prompt: str) -> Completion: ...

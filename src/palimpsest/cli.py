@@ -1,8 +1,8 @@
 import psycopg
 import typer
-from typer import progressbar
 from httpx import HTTPStatusError
 from psycopg.rows import scalar_row
+from typer import progressbar
 
 from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist, upsert_change_summaries
@@ -14,13 +14,20 @@ from palimpsest.ingest import (
     sync_facts,
     sync_filings,
 )
-from palimpsest.llm import OllamaLLM
+from palimpsest.llm import LLM, AnthropicLLM, OllamaLLM
 from palimpsest.migrate import apply_migrations
 from palimpsest.sections import extract_sections
 from palimpsest.storage import LocalStorage
 from palimpsest.summarize import summarize_label_changes
 
 app = typer.Typer(help="SEC filings research assistant", no_args_is_help=True)
+
+
+def _build_llm(provider: str, model: str, anthropic_api_key: str = "") -> LLM:
+    if provider == "ollama":
+        return OllamaLLM(model)
+    assert anthropic_api_key, "ANTHROPIC_API_KEY variable not set"
+    return AnthropicLLM(model, anthropic_api_key)
 
 
 @app.command("migrate")
@@ -212,7 +219,7 @@ def diff_sections_cmd() -> None:
 @app.command("summarize-changes")
 def summarize_changes_cmd() -> None:
     """Generate summary of each label change using the prefered LLM service"""
-    llm = OllamaLLM()
+    llm = _build_llm(settings.summarizer_provider, settings.summarizer_model)
     with psycopg.connect(settings.db_url) as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -230,7 +237,9 @@ def summarize_changes_cmd() -> None:
             changes = cur.fetchall()
 
         count = 0
-        with progressbar(summarize_label_changes(llm, changes=changes), length=len(changes)) as progress:
+        with progressbar(
+            summarize_label_changes(llm, changes=changes), length=len(changes)
+        ) as progress:
             for summary in progress:
                 upsert_change_summaries(conn, summary)
                 conn.commit()
