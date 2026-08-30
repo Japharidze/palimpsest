@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs, psql, dbt-test, reset, init-data, sync, analyze summarize
+.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries
 
 up:
 	docker compose up -d
@@ -43,10 +43,25 @@ sync:
 	uv run palim fetch-documents
 	uv run palim extract-sections
 
-analyze:
+diff:
 	uv run palim diff-sections
 
 summarize:
 	uv run palim summarize-changes
 
-fresh: reset init-data sync dbt analyze summarize
+fresh:
+	$(MAKE) dump-summaries
+	$(MAKE) reset
+	$(MAKE) init-data sync dbt
+	$(MAKE) diff
+	$(MAKE) restore-summaries
+	$(MAKE) summarize
+
+
+dump-summaries:
+	docker compose exec -T postgres pg_dump -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
+		-t change_summaries --data-only > data/summaries.sql || true
+
+restore-summaries:
+	docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
+		< data/summaries.sql || true
