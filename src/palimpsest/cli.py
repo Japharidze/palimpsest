@@ -5,9 +5,11 @@ from psycopg.rows import scalar_row
 from typer import progressbar
 
 from palimpsest.config import DATA_DIR, settings
-from palimpsest.db import add_to_watchlist, upsert_change_summaries
+from palimpsest.db import add_to_watchlist, upsert_change_summaries, upsert_chunk
 from palimpsest.diffing import sync_changes
 from palimpsest.edgar import EdgarClient
+from palimpsest.embedding import OllamaEmbedder
+from palimpsest.indexing import vectorize_sections
 from palimpsest.ingest import (
     fetch_document,
     refresh_companies,
@@ -19,7 +21,6 @@ from palimpsest.migrate import apply_migrations
 from palimpsest.sections import extract_sections
 from palimpsest.storage import LocalStorage
 from palimpsest.summarize import summarize_label_changes
-from palimpsest.embedding import OllamaEmbedder
 
 app = typer.Typer(help="SEC filings research assistant", no_args_is_help=True)
 
@@ -247,6 +248,7 @@ def summarize_changes_cmd() -> None:
                 count += 1
         typer.echo(f"{count} summaries inserted")
 
+
 @app.command("vectorize-sections")
 def vectorize_sections_cmd():
     """Chunk -> Embed -> Store sections into table 'chunks'"""
@@ -254,25 +256,28 @@ def vectorize_sections_cmd():
     with psycopg.connect(settings.db_url) as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                select
-                    accession_number,
-                    section,
-                    content
-                from filing_sections
+                select fs.accession_number, fs.section, fs.content
+                from filing_sections fs
+                where not exists (
+                    select 1 from section_chunks sc
+                    where sc.accession_number = fs.accession_number
+                      and sc.section = fs.section
+                )
             """)
             section_rows = cur.fetchall()
 
-        count = 0
-        with progressbar(
-            vectorize_sections(embedder, section_rows), length=len(section_rows)
-        ) as progress:
-            for embed in progress:
-                upsert_chunk(conn, embed)
+        inserted, found = 0, 0
+        with progressbar(section_rows, length=len(section_rows)) as progress:
+            for accn, section, content in progress:
+                for chunk in vectorize_sections(embedder, accn, section, content):
+                    if upsert_chunk(conn, chunk):
+                        inserted += 1
+                    else:
+                        found += 1
                 conn.commit()
-                count += 1
-        typer.echo(f"{count} chunks inserted")
-
-
+        typer.echo(
+            f"{inserted} number of chunks inserted and {found} was found already inserted"
+        )
 
 
 def main() -> None:
