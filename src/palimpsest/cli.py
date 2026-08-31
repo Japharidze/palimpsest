@@ -251,6 +251,26 @@ def summarize_changes_cmd() -> None:
 def vectorize_sections_cmd():
     """Chunk -> Embed -> Store sections into table 'chunks'"""
     embedder = OllamaEmbedder(settings.embedding_model)
+    with psycopg.connect(settings.db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                select
+                    accession_number,
+                    section,
+                    content
+                from filing_sections
+            """)
+            section_rows = cur.fetchall()
+
+        count = 0
+        with progressbar(
+            vectorize_sections(embedder, section_rows), length=len(section_rows)
+        ) as progress:
+            for embed in progress:
+                upsert_chunk(conn, embed)
+                conn.commit()
+                count += 1
+        typer.echo(f"{count} chunks inserted")
 
 
 
