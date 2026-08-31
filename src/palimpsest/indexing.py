@@ -40,3 +40,17 @@ def vectorize_sections(
             chunk,
             embedder.embed(chunk),
         )
+
+def search(conn, embedder: Embedder, text: str, limit: int = 10) -> list[tuple]:
+    query = """
+        select accession_number, section, content
+        from section_chunks
+        order by embedding <=> %s::vector
+        limit %s
+    """
+    vector = embedder.embed(text)
+    with conn.cursor() as cur:
+        cur.execute(query, (vector, limit))
+        nearest_chunks = cur.fetchall()
+
+    return nearest_chunks

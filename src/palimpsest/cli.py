@@ -1,15 +1,17 @@
+from typing_extensions import Annotated
+
 import psycopg
 import typer
 from httpx import HTTPStatusError
 from psycopg.rows import scalar_row
-from typer import progressbar
+from typer import Typer, progressbar
 
 from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist, upsert_change_summaries, upsert_chunk
 from palimpsest.diffing import sync_changes
 from palimpsest.edgar import EdgarClient
 from palimpsest.embedding import OllamaEmbedder
-from palimpsest.indexing import vectorize_sections
+from palimpsest.indexing import search, vectorize_sections
 from palimpsest.ingest import (
     fetch_document,
     refresh_companies,
@@ -278,6 +280,15 @@ def vectorize_sections_cmd():
         typer.echo(
             f"{inserted} number of chunks inserted and {found} was found already inserted"
         )
+
+
+@app.command("search")
+def search_cmd(question: Annotated[str, typer.Argument(help="Question text")]) -> None:
+    with psycopg.connect(settings.db_url) as conn:
+        nearest_chunks = search(
+            conn, OllamaEmbedder(settings.embedding_model), question
+        )
+    typer.echo(f"{nearest_chunks}")
 
 
 def main() -> None:
