@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     summarizer_provider: str
     summarizer_model: str
     anthropic_api_key: str | None  # only needed when provider is anthropic
+    embedding_model: str
 
     @property
     def db_url(self) -> str:

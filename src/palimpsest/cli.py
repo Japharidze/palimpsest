@@ -19,6 +19,7 @@ from palimpsest.migrate import apply_migrations
 from palimpsest.sections import extract_sections
 from palimpsest.storage import LocalStorage
 from palimpsest.summarize import summarize_label_changes
+from palimpsest.embedding import OllamaEmbedder
 
 app = typer.Typer(help="SEC filings research assistant", no_args_is_help=True)
 
@@ -245,6 +246,13 @@ def summarize_changes_cmd() -> None:
                 conn.commit()
                 count += 1
         typer.echo(f"{count} summaries inserted")
+
+@app.command("vectorize-sections")
+def vectorize_sections_cmd():
+    """Chunk -> Embed -> Store sections into table 'chunks'"""
+    embedder = OllamaEmbedder(settings.embedding_model)
+
+
 
 
 def main() -> None:
