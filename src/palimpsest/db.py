@@ -247,3 +247,16 @@ def upsert_change_summaries(conn, row: tuple) -> None:
         """, row
         )
 
+def upsert_chunk(conn, row: tuple) -> bool:
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO section_chunks
+                (accession_number, section, chunk_index, start_offset, end_offset, content, embedding)
+            VALUES
+                (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT DO NOTHING;
+        """, row
+        )
+        
+        has_inserted = bool(cur.rowcount)
+    return has_inserted

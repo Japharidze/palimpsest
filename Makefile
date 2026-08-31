@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries
+.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking
 
 up:
 	docker compose up -d
@@ -49,6 +49,9 @@ diff:
 summarize:
 	uv run palim summarize-changes
 
+chunking:
+	uv run palim vectorize-sections
+
 fresh:
 	$(MAKE) dump-summaries
 	$(MAKE) reset
@@ -56,11 +59,12 @@ fresh:
 	$(MAKE) diff
 	$(MAKE) restore-summaries
 	$(MAKE) summarize
+	$(MAKE) chunking
 
 
 dump-summaries:
 	docker compose exec -T postgres pg_dump -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
-		-t change_summaries --data-only > data/summaries.sql || true
+		-t change_summaries -t section_chunks --data-only > data/summaries.sql || true
 
 restore-summaries:
 	docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
