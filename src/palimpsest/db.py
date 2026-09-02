@@ -4,7 +4,10 @@ def _temp_table_query(table: str) -> str:
         select * from {table} limit 0
     """
 
-def add_to_watchlist(conn, tickers: list[str]) -> tuple[list[str], list[str], list[str]]:
+
+def add_to_watchlist(
+    conn, tickers: list[str]
+) -> tuple[list[str], list[str], list[str]]:
     """Add tickers to the watchlist.
 
     Returns (added, already_watching, not_found), all as tickers.
@@ -14,7 +17,7 @@ def add_to_watchlist(conn, tickers: list[str]) -> tuple[list[str], list[str], li
             "select ticker, cik from company_tickers where ticker = any(%s)",
             (tickers,),
         )
-        resolved = dict(cur.fetchall())          # ticker -> cik
+        resolved = dict(cur.fetchall())  # ticker -> cik
 
         not_found = [t for t in tickers if t not in resolved]
         if not resolved:
@@ -35,9 +38,10 @@ def add_to_watchlist(conn, tickers: list[str]) -> tuple[list[str], list[str], li
     already = [t for t, c in resolved.items() if c not in inserted_ciks]
     return added, already, not_found
 
+
 def upsert_companies(conn, rows) -> None:
     with conn.cursor() as cur:
-        cur.execute(_temp_table_query('companies'))
+        cur.execute(_temp_table_query("companies"))
 
         with cur.copy("COPY tmp_companies (cik, name) FROM STDIN") as copy:
             for r in rows:
@@ -51,15 +55,16 @@ def upsert_companies(conn, rows) -> None:
             on conflict (cik) do update set name = excluded.name
         """)
 
+
 def upsert_company_tickers(conn, rows) -> None:
     with conn.cursor().copy("COPY company_tickers (cik, ticker) FROM STDIN") as copy:
         for r in rows:
             copy.write_row(r)
-        
+
 
 def upsert_filings(conn, rows) -> None:
     with conn.cursor() as cur:
-        cur.execute(_temp_table_query('filings'))
+        cur.execute(_temp_table_query("filings"))
 
         with cur.copy("""
             COPY tmp_filings (
@@ -72,8 +77,8 @@ def upsert_filings(conn, rows) -> None:
                 document_key
             ) FROM STDIN
         """) as copy:
-           for r in rows:
-               copy.write_row(r)
+            for r in rows:
+                copy.write_row(r)
 
         cur.execute("""
             INSERT INTO filings (
@@ -97,9 +102,10 @@ def upsert_filings(conn, rows) -> None:
             ON CONFLICT (accession_number) DO NOTHING;
         """)
 
+
 def upsert_facts(conn, rows) -> int:
     with conn.cursor() as cur:
-        cur.execute(_temp_table_query('xbrl_facts'))
+        cur.execute(_temp_table_query("xbrl_facts"))
 
         with cur.copy("""
             COPY tmp_xbrl_facts (
@@ -115,8 +121,8 @@ def upsert_facts(conn, rows) -> int:
                 filed
             ) FROM STDIN
         """) as copy:
-           for r in rows:
-               copy.write_row(r)
+            for r in rows:
+                copy.write_row(r)
 
         cur.execute("""
             INSERT INTO xbrl_facts (
@@ -149,12 +155,13 @@ def upsert_facts(conn, rows) -> int:
 
     return inserted
 
+
 def upsert_sections(conn, rows) -> int:
     if not rows:
         return 0
 
     with conn.cursor() as cur:
-        cur.execute(_temp_table_query('filing_sections'))
+        cur.execute(_temp_table_query("filing_sections"))
 
         with cur.copy("""COPY tmp_filing_sections (
                         accession_number,
@@ -180,17 +187,21 @@ def upsert_sections(conn, rows) -> int:
                 detection_method = excluded.detection_method
         """)
         inserted = cur.rowcount
-        
+
         return inserted
+
 
 def upsert_section_changes(conn, rows) -> int:
     if not rows:
         return 0
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             delete from section_changes
             where from_accession = %s and to_accession = %s and label = %s
-        """, (rows[0][3], rows[0][4], rows[0][2]))
+        """,
+            (rows[0][3], rows[0][4], rows[0][2]),
+        )
 
         with cur.copy("""
             COPY section_changes (
@@ -204,26 +215,32 @@ def upsert_section_changes(conn, rows) -> int:
         inserted = cur.rowcount
     return inserted
 
+
 def upsert_change_summaries(conn, row: tuple) -> None:
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO change_summaries
                 (text_hash, summary, model, created_at)
             VALUES
                 (%s, %s, %s, %s);
-        """, row
+        """,
+            row,
         )
+
 
 def upsert_chunk(conn, row: tuple) -> bool:
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO section_chunks
                 (accession_number, section, chunk_index, start_offset, end_offset, content, embedding)
             VALUES
                 (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT DO NOTHING;
-        """, row
+        """,
+            row,
         )
-        
+
         has_inserted = bool(cur.rowcount)
     return has_inserted
