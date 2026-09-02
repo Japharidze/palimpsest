@@ -2,7 +2,7 @@ import json
 from collections.abc import Generator
 from datetime import UTC, datetime
 
-from palimpsest.db import upsert_companies, upsert_facts, upsert_filings
+from palimpsest.db import upsert_companies, upsert_company_tickers, upsert_facts, upsert_filings
 from palimpsest.edgar import EdgarClient
 
 TRACKED_FORMS = frozenset({
@@ -50,7 +50,9 @@ def refresh_companies(client, storage, conn) -> int:
     storage.put(key, json.dumps(raw).encode())
 
     rows = [_parse_company(r) for r in raw.values()]
-    upsert_companies(conn, rows)
+    upsert_companies(conn, {(r[0], r[2]) for r in rows})
+    upsert_company_tickers(conn, {(r[0], r[1]) for r in rows})
+
 
     return len(rows)
 

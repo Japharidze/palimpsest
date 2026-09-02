@@ -1,3 +1,9 @@
+def _temp_table_query(table: str) -> str:
+    return f"""
+        create temp table tmp_{table} on commit drop as
+        select * from {table} limit 0
+    """
+
 def add_to_watchlist(conn, tickers: list[str]) -> tuple[list[str], list[str], list[str]]:
     """Add tickers to the watchlist.
 
@@ -31,48 +37,32 @@ def add_to_watchlist(conn, tickers: list[str]) -> tuple[list[str], list[str], li
 
 def upsert_companies(conn, rows) -> None:
     with conn.cursor() as cur:
-        cur.execute("""
-            create temp table temp_companies (
-                cik text,
-                ticker text,
-                name text
-            ) on commit drop
-        """)
+        cur.execute(_temp_table_query('companies'))
 
-        with cur.copy("COPY temp_companies (cik, ticker, name) FROM STDIN") as copy:
+        with cur.copy("COPY tmp_companies (cik, name) FROM STDIN") as copy:
             for r in rows:
                 copy.write_row(r)
 
         cur.execute("""
             insert into companies (cik, name)
             select distinct on (cik) cik, name
-            from temp_companies
-            order by cik, ticker
+            from tmp_companies
+            order by cik, name
             on conflict (cik) do update set name = excluded.name
         """)
 
-        cur.execute("""
-            insert into company_tickers (cik, ticker)
-            select distinct cik, ticker from temp_companies
-            on conflict (cik, ticker) do nothing
-        """)
+def upsert_company_tickers(conn, rows) -> None:
+    with conn.cursor().copy("COPY company_tickers (cik, ticker) FROM STDIN") as copy:
+        for r in rows:
+            copy.write_row(r)
+        
 
 def upsert_filings(conn, rows) -> None:
     with conn.cursor() as cur:
-        cur.execute("""
-            CREATE TEMP TABLE temp_filings (
-                accession_number text,
-                cik text,
-                form text,
-                filing_date date,
-                report_date date,
-                primary_document text,
-                document_key text
-            ) ON COMMIT DROP;
-        """)
+        cur.execute(_temp_table_query('filings'))
 
         with cur.copy("""
-            COPY temp_filings (
+            COPY tmp_filings (
                 accession_number,
                 cik,
                 form,
@@ -103,29 +93,16 @@ def upsert_filings(conn, rows) -> None:
                 report_date,
                 primary_document,
                 document_key
-            FROM temp_filings
+            FROM tmp_filings
             ON CONFLICT (accession_number) DO NOTHING;
         """)
 
 def upsert_facts(conn, rows) -> int:
     with conn.cursor() as cur:
-        cur.execute("""
-            CREATE TEMP TABLE temp_facts (
-                cik text,
-                taxonomy text,
-                tag text,
-                unit text,
-                start_date date,
-                end_date date,
-                val numeric,
-                accn text,
-                form text,
-                filed date
-            ) ON COMMIT DROP;
-        """)
+        cur.execute(_temp_table_query('xbrl_facts'))
 
         with cur.copy("""
-            COPY temp_facts (
+            COPY tmp_xbrl_facts (
                 cik,
                 taxonomy,
                 tag,
@@ -165,7 +142,7 @@ def upsert_facts(conn, rows) -> int:
                 accn,
                 form,
                 filed
-            FROM temp_facts
+            FROM tmp_xbrl_facts
             ON CONFLICT (cik, taxonomy, tag, unit, accn, end_date, start_date) DO NOTHING;
         """)
         inserted = cur.rowcount
@@ -177,19 +154,9 @@ def upsert_sections(conn, rows) -> int:
         return 0
 
     with conn.cursor() as cur:
-        cur.execute("""
-            create temp table temp_sections (
-                accession_number text,
-                section text,
-                content text,
-                start_offset int,
-                end_offset int,
-                confidence numeric,
-                detection_method text
-            ) on commit drop
-        """)
+        cur.execute(_temp_table_query('filing_sections'))
 
-        with cur.copy("""COPY temp_sections (
+        with cur.copy("""COPY tmp_filing_sections (
                         accession_number,
                         section,
                         content,
@@ -204,7 +171,7 @@ def upsert_sections(conn, rows) -> int:
         cur.execute("""
             insert into filing_sections (accession_number, section, content, start_offset, end_offset, confidence,
             detection_method)
-            select accession_number, section, content, start_offset, end_offset, confidence, detection_method from temp_sections
+            select accession_number, section, content, start_offset, end_offset, confidence, detection_method from tmp_filing_sections
             on conflict (accession_number, section) do update set 
                 content          = excluded.content,
                 start_offset     = excluded.start_offset,

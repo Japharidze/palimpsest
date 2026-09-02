@@ -3,6 +3,8 @@ export
 
 .PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking
 
+PSQL_CMD = PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+
 up:
 	docker compose up -d
 
@@ -13,7 +15,7 @@ db:
 	docker compose exec postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
 
 psql:
-	PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+	$(PSQL_CMD)
 
 migrate:
 	uv run palim migrate
@@ -31,6 +33,7 @@ reset:
 	docker compose down -v
 	docker compose up -d
 	until docker compose exec -T postgres pg_isready -U $(POSTGRES_USER) -q; do sleep 1; done
+	$(PSQL_CMD) -c "CREATE EXTENSION IF NOT EXISTS vector;"
 	$(MAKE) migrate
 
 init-data:
