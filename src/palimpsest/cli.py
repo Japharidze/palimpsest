@@ -6,6 +6,7 @@ from httpx import HTTPStatusError
 from psycopg.rows import scalar_row
 from typer import progressbar
 
+from palimpsest.agent.graph import loop
 from palimpsest.chunks import search, vectorize_sections
 from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist, upsert_change_summaries, upsert_chunk
@@ -288,13 +289,22 @@ def search_cmd(question: Annotated[str, typer.Argument(help="Question text")]) -
         nearest_chunks = search(
             conn, OllamaEmbedder(settings.embedding_model), question
         )
-    for (
-        accn, section, cik, form, filing_date, \
-        start, end, content, dist,
-    ) in nearest_chunks:
-        typer.echo(f"\n[{dist:.3f}] {cik} {accn} {form} {section} @{start}")
-        typer.echo(content[:300])
+    for r in nearest_chunks:
+        typer.echo(
+            f"\n[{r['distance']:.3f}] {r['cik']} {r['accession_number']} "
+            f"{r['form']} {r['section']} @{r['start_offset']}"
+        )
+        typer.echo(r["content"][:300])
 
+
+@app.command("debug-loop")
+def debug_loop_cmd(question: Annotated[str, typer.Argument(help="Question text for agent")]) -> None:
+    embedder = OllamaEmbedder(settings.embedding_model)
+    agent_model = _build_llm(settings.summarizer_provider, settings.summarizer_model)
+    messages = [{"role": "user", "content": question}]
+    with psycopg.connect(settings.db_url) as conn:
+        response = loop(conn, embedder, agent_model, messages)
+    typer.echo(f"{response}")
 
 def main() -> None:
     app()

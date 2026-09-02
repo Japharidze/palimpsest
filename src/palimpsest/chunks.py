@@ -2,6 +2,7 @@ from collections.abc import Generator
 from datetime import date
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from psycopg.rows import dict_row
 
 from palimpsest.embedding import Embedder
 
@@ -52,7 +53,7 @@ def search(
     section: str | None = None,
     since: date | None = None,
     limit: int = 15,
-) -> list[tuple]:
+) -> list[dict]:
     query = """
         with ranked as (
             select
@@ -71,23 +72,32 @@ def search(
                 ) as rn
             from section_chunks sc
             join filings f using (accession_number)
-            join company_tickers ct using (cik)
+            left join analytics.section_labels sl
+                on sl.form = replace(f.form, '/A', '')
+               and sl.section_key = sc.section
             where
-                (%(ticker)s::text is null or ct.ticker = %(ticker)s)
+                (%(ticker)s::text is null or f.cik in (
+                    select cik from company_tickers where ticker = %(ticker)s
+                ))
                 and (%(form)s::text is null or f.form = %(form)s)
-                and (%(section)s::text is null or sc.section = %(section)s)
+                and (%(section)s::text is null
+                    or sl.label = %(section)s
+                    or sc.section = %(section)s)
                 and (%(since)s::date is null or f.filing_date >= %(since)s)
+        ), deduped as (
+            select distinct on (left(content, 200))
+                accession_number, section, cik, form, filing_date,
+                start_offset, end_offset, content, distance
+            from ranked
+            where rn <= %(per_section)s
+            order by left(content, 200), filing_date desc
         )
-        select
-            accession_number, section, cik, form, filing_date,
-            start_offset, end_offset, content, distance
-        from ranked
-        where rn <= %(per_section)s
+        select * from deduped
         order by distance
         limit %(limit)s
     """
     vector = embedder.embed(text)
-    with conn.cursor() as cur:
+    with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(query, {
                 "vec": vector,
                 "ticker": ticker,
