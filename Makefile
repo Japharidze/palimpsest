@@ -66,8 +66,16 @@ fresh:
 
 
 dump-summaries:
-	docker compose exec -T postgres pg_dump -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
-		-t change_summaries -t section_chunks --data-only > data/summaries.sql || true
+	@docker compose exec -T postgres pg_dump -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
+		-t change_summaries -t section_chunks --data-only > data/summaries.sql.tmp || \
+		{ echo "dump failed, keeping existing summaries.sql"; rm -f data/summaries.sql.tmp; exit 0; }
+	@if [ -s data/summaries.sql.tmp ] && grep -q "COPY" data/summaries.sql.tmp; then \
+		mv data/summaries.sql.tmp data/summaries.sql; \
+		echo "summaries dumped ($$(wc -l < data/summaries.sql) lines)"; \
+	else \
+		echo "dump empty or malformed, keeping existing summaries.sql"; \
+		rm -f data/summaries.sql.tmp; \
+	fi
 
 restore-summaries:
 	docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
