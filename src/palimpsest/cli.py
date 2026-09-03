@@ -6,7 +6,7 @@ from httpx import HTTPStatusError
 from psycopg.rows import scalar_row
 from typer import progressbar
 
-from palimpsest.agent.graph import loop
+from palimpsest.agent.graph import build_graph
 from palimpsest.chunks import search, vectorize_sections
 from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist, upsert_change_summaries, upsert_chunk
@@ -297,14 +297,16 @@ def search_cmd(question: Annotated[str, typer.Argument(help="Question text")]) -
         typer.echo(r["content"][:300])
 
 
-@app.command("debug-loop")
-def debug_loop_cmd(question: Annotated[str, typer.Argument(help="Question text for agent")]) -> None:
+@app.command("debug-graph")
+def debug_graph_cmd(question: Annotated[str, typer.Argument(help="Question text for agent")]) -> None:
     embedder = OllamaEmbedder(settings.embedding_model)
     agent_model = _build_llm(settings.summarizer_provider, settings.summarizer_model)
     messages = [{"role": "user", "content": question}]
     with psycopg.connect(settings.db_url) as conn:
-        response = loop(conn, embedder, agent_model, messages)
-    typer.echo(f"{response}")
+        graph = build_graph(conn, embedder, agent_model)
+        result = graph.invoke({"messages": messages})
+    for m in result["messages"]:
+        typer.echo(m)
 
 def main() -> None:
     app()
