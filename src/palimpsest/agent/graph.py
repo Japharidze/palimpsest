@@ -9,9 +9,10 @@ from palimpsest.llm import LLM
 
 class MessagesState(TypedDict):
     messages: Annotated[list[dict], operator.add]
+    iterations: int
 
 
-def build_graph(conn, embedder, model: LLM):
+def build_graph(conn, embedder, model: LLM, iter_cap: int = 8):
     tools = build_registry(Toolbox(conn, embedder))
 
     def agent_node(state: MessagesState):
@@ -23,7 +24,8 @@ def build_graph(conn, embedder, model: LLM):
                     "content": response.text,
                     "tool_calls": response.tool_calls,
                 }
-            ]
+            ],
+            "iterations": state["iterations"] + 1
         }
 
     def tool_node(state: MessagesState):
@@ -51,10 +53,12 @@ def build_graph(conn, embedder, model: LLM):
 
         return {"messages": out}
 
-    def should_continue(state: MessagesState) -> Literal["tool_node", END]: # type: ignore
-        if state["messages"][-1].get("tool_calls"):
-            return "tool_node"
-        return END
+    def should_continue(state: MessagesState) -> Literal["tool_node", END]:  # type: ignore
+        if state["iterations"] >= iter_cap:
+            return END
+        if not state["messages"][-1].get("tool_calls"):
+            return END
+        return "tool_node"
 
     agent_builder = StateGraph(MessagesState)
 

@@ -298,15 +298,18 @@ def search_cmd(question: Annotated[str, typer.Argument(help="Question text")]) -
 
 
 @app.command("debug-graph")
-def debug_graph_cmd(question: Annotated[str, typer.Argument(help="Question text for agent")]) -> None:
+def debug_graph_cmd(
+    question: Annotated[str, typer.Argument(help="Question text for agent")],
+) -> None:
     embedder = OllamaEmbedder(settings.embedding_model)
     agent_model = _build_llm(settings.summarizer_provider, settings.summarizer_model)
     messages = [{"role": "user", "content": question}]
     with psycopg.connect(settings.db_url) as conn:
         graph = build_graph(conn, embedder, agent_model)
-        result = graph.invoke({"messages": messages})
+        result = graph.invoke({"messages": messages, "iterations": 0})
     for m in result["messages"]:
         typer.echo(m)
+
 
 def main() -> None:
     app()
