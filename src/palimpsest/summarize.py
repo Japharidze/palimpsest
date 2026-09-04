@@ -1,8 +1,6 @@
 from collections.abc import Generator
 from datetime import UTC, datetime
 
-from palimpsest.llm import LLM
-
 PROMPTS = {
     "modified": """You are analyzing a change to an SEC filing's {label} section.
 
@@ -30,7 +28,7 @@ In one sentence, state what disclosure was dropped. Do not speculate about why."
 }
 
 
-def summarize_label_changes(llm_client: LLM, changes: list[tuple]) -> Generator[tuple]:
+def summarize_label_changes(llm_client, changes: list[tuple]) -> Generator[tuple]:
     for text_hash, label, change_type, from_text, to_text in changes:
         template = PROMPTS.get(change_type)
         if template is None:
