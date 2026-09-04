@@ -30,6 +30,23 @@ The arrow from the rule engine to the agent is the one that matters. Rules do no
 
 **Rules.** Plain Python over the report tables. Going-concern language, auditor changes, late filings, restatements, metric deterioration. Deterministic, testable, and the input to triage.
 
-**Agent.** A LangGraph flow: retrieve relevant passages, read them, produce an answer, then validate. Citation checking is mechanical first — every claimed passage must exist at the offset it claims, in the filing it claims — before any model-based critique. A model judging a model is not evidence.
-
-**Interface.** FastAPI serving briefs, ad-hoc questions, and agent traces, with a web frontend over it.
+**Text.** Filing documents are downloaded once and parsed from storage, so a
+parser change is replayed without refetching. Sections are extracted with a
+confidence score, split into overlapping chunks with character offsets, and
+embedded into the same database as the rest of the data. Consecutive filings of
+the same form are compared paragraph by paragraph: unchanged text is skipped by
+hash, and the remainder is matched by similarity to distinguish rewordings from
+additions and removals. Each change is then described by a language model in a
+single sentence, keyed on the hash of the text it describes so the result
+survives any re-run of the diff.
+ 
+**Agent.** A LangGraph state machine. One node calls the model with the
+available tools; a conditional edge routes to a tool node when the model asks
+for one, and to the end when it answers. Tools are ordinary functions over the
+warehouse — passage search, company metrics, recent changes — and the model
+never touches the database: it emits a name and arguments, and the calling code
+holds the only mapping to behaviour. Conversation state persists per thread, so
+follow-up questions carry their history. Citation checking is mechanical first —
+every claimed passage must exist at the offset it claims, in the filing it
+claims — before any model-based critique. A model judging a model is not
+evidence.
