@@ -22,7 +22,6 @@ class ChatResponse:
 
 class LLM(Protocol):
     def complete(self, prompt: str) -> Completion: ...
-    def chat(self, messages: list, tools: list[Callable]) -> ChatResponse: ...
 
 
 class OllamaLLM:
@@ -42,19 +41,7 @@ class OllamaLLM:
             latency_ms=resp.total_duration,
         )
 
-    def chat(self, messages, tools) -> ChatResponse:
-        response = self._client.chat(
-            model=self._model,
-            messages=messages,
-            tools=tools,
-            options={"temperature": 0},
-        )
-        return ChatResponse(
-            text=response.message.content, tool_calls=response.message.tool_calls
-        )
-
 
 class AnthropicLLM:
     def __init__(self, model: str, api_key: str): ...
     def complete(self, prompt: str) -> Completion: ...
-    def chat(self, messages, tools) -> ChatResponse: ...
