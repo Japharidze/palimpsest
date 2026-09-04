@@ -1,6 +1,9 @@
 from datetime import date
 from typing import Any
 
+from langchain_core.tools import StructuredTool
+from pydantic import BaseModel, Field
+
 from palimpsest.chunks import search
 from palimpsest.embedding import Embedder
 
@@ -44,11 +47,6 @@ class Toolbox:
                 "legal_proceedings", "controls", "cybersecurity".
             since: Optional ISO date; only filings on or after this date.
         """
-        if ticker:
-            cik = self._resolve_cik(ticker)
-            if cik is None:
-                return f"No company found for ticker {ticker!r}."
-
         since_date = None
         if since:
             try:
@@ -113,8 +111,11 @@ class Toolbox:
         lines = []
         for row in rows:
             d: dict[str, Any] = dict(zip(cols, row))
-            flags = [k.removeprefix("flag_") for k, v in d.items()
-                     if k.startswith("flag_") and v]
+            flags = [
+                k.removeprefix("flag_")
+                for k, v in d.items()
+                if k.startswith("flag_") and v
+            ]
             lines.append(
                 f"{d['period_end']}: revenue={d['revenue']}, "
                 f"gross_margin={d['gross_margin']}, net_income={d['net_income']}, "
@@ -174,10 +175,60 @@ class Toolbox:
         return f"Recent changes for {ticker}:\n\n" + "\n\n".join(lines)
 
 
+# Define explicit schemas matching your functions exactly
+class SearchChunksInput(BaseModel):
+    query: str = Field(description="What to search for, in natural language.")
+    ticker: str | None = Field(
+        default=None,
+        description="Optional stock ticker to restrict the search, e.g. 'NVDA'.",
+    )
+    form: str | None = Field(
+        default=None,
+        description="Optional filing type, one of '10-K', '10-Q', '8-K', '20-F', 'S-1'.",
+    )
+    section: str | None = Field(
+        default=None, description="Optional section label, e.g. 'risk_factors', 'mda'."
+    )
+    since: str | None = Field(
+        default=None,
+        description="Optional ISO date; only filings on or after this date.",
+    )
+
+
+class GetCompanyMetricsInput(BaseModel):
+    ticker: str = Field(description="Stock ticker, e.g. 'MSFT'.")
+    quarters: int = Field(
+        default=4, description="How many recent quarters to return (default 4, max 12)."
+    )
+
+
+class GetRecentChangesInput(BaseModel):
+    ticker: str = Field(description="Stock ticker, e.g. 'NVDA'.")
+    section: str | None = Field(
+        default=None,
+        description="Optional section label to restrict to, e.g. 'risk_factors'.",
+    )
+    limit: int = Field(
+        default=20, description="Maximum number of changes to return (default 20)."
+    )
+
+
 def build_registry(toolbox: Toolbox) -> dict[str, Any]:
     """Explicit name -> callable map. Only these can be invoked."""
     return {
-        "search_chunks": toolbox.search_chunks,
-        "get_company_metrics": toolbox.get_company_metrics,
-        "get_recent_changes": toolbox.get_recent_changes,
+        "search_chunks": StructuredTool.from_function(
+            func=toolbox.search_chunks,
+            name="search_chunks",
+            args_schema=SearchChunksInput,
+        ),
+        "get_company_metrics": StructuredTool.from_function(
+            func=toolbox.get_company_metrics,
+            name="get_company_metrics",
+            args_schema=GetCompanyMetricsInput,
+        ),
+        "get_recent_changes": StructuredTool.from_function(
+            func=toolbox.get_recent_changes,
+            name="get_recent_changes",
+            args_schema=GetRecentChangesInput,
+        ),
     }

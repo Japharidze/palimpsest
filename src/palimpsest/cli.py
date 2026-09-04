@@ -19,7 +19,7 @@ from palimpsest.ingest import (
     sync_facts,
     sync_filings,
 )
-from palimpsest.llm import LLM, AnthropicLLM, OllamaLLM
+from palimpsest.llm import OllamaLLM
 from palimpsest.migrate import apply_migrations
 from palimpsest.sections import extract_sections
 from palimpsest.storage import LocalStorage
@@ -27,12 +27,17 @@ from palimpsest.summarize import summarize_label_changes
 
 app = typer.Typer(help="SEC filings research assistant", no_args_is_help=True)
 
+class InvalidLLMProviderError(Exception):
+    """Raised when LLM provider not matching avilable list"""
 
-def _build_llm(provider: str, model: str, anthropic_api_key: str = "") -> LLM:
+def _build_llm(provider: str, model: str, anthropic_api_key: str | None = None): 
     if provider == "ollama":
         return OllamaLLM(model)
-    assert anthropic_api_key, "ANTHROPIC_API_KEY variable not set"
-    return AnthropicLLM(model, anthropic_api_key)
+    if provider == "anthropic":
+        from langchain_anthropic import ChatAnthropic
+        assert anthropic_api_key, "ANTHROPIC_API_KEY variable not set"
+        return ChatAnthropic(model=model, api_key=anthropic_api_key)
+    raise InvalidLLMProviderError("LLM Provider not available")
 
 
 @app.command("migrate")
@@ -302,7 +307,7 @@ def debug_graph_cmd(
     question: Annotated[str, typer.Argument(help="Question text for agent")],
 ) -> None:
     embedder = OllamaEmbedder(settings.embedding_model)
-    agent_model = _build_llm(settings.summarizer_provider, settings.summarizer_model)
+    agent_model = _build_llm(settings.agent_provider, settings.agent_model, settings.anthropic_api_key)
     messages = [{"role": "user", "content": question}]
     with psycopg.connect(settings.db_url) as conn:
         graph = build_graph(conn, embedder, agent_model)
