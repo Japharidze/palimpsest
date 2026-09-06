@@ -18,7 +18,7 @@ def build_graph(conn, embedder, model, iter_cap: int = 8):
     model_with_tools = model.bind_tools(list(tools.values()))
 
     def agent_node(state: MessagesState):
-        msgs = [{'role': 'system', 'content': SYSTEM_PROMPT}] + state["messages"]
+        msgs = [{"role": "system", "content": SYSTEM_PROMPT}] + state["messages"]
         response = model_with_tools.invoke(msgs)
         return {
             "messages": [
