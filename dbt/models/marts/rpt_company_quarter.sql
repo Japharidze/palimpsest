@@ -7,6 +7,7 @@ with
             q.cik,
             c.name as company_name,
             q.period_end,
+            q.source_accn,
 
             q.revenue,
             q.cost_of_revenue,

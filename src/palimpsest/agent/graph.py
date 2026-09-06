@@ -4,6 +4,7 @@ from typing import Annotated, Literal, TypedDict
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
+from palimpsest.agent.prompts import SYSTEM_PROMPT
 from palimpsest.agent.tools import Toolbox, build_registry
 
 
@@ -17,7 +18,8 @@ def build_graph(conn, embedder, model, iter_cap: int = 8):
     model_with_tools = model.bind_tools(list(tools.values()))
 
     def agent_node(state: MessagesState):
-        response = model_with_tools.invoke(state["messages"])
+        msgs = [{'role': 'system', 'content': SYSTEM_PROMPT}] + state["messages"]
+        response = model_with_tools.invoke(msgs)
         return {
             "messages": [
                 {

@@ -8,6 +8,7 @@ with
 select
     cik,
     end_date as period_end,
+    max(accn) as source_accn,
 
     -- flows (quarterly durations)
     max(val) filter (where metric = 'revenue') as revenue,

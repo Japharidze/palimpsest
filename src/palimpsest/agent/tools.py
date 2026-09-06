@@ -91,7 +91,7 @@ class Toolbox:
         with self._conn.cursor() as cur:
             cur.execute(
                 """
-                select period_end, revenue, gross_margin, net_income,
+                select source_accn, period_end, revenue, gross_margin, net_income,
                        roa, roe, revenue_growth_yoy, inventory_growth_yoy,
                        flag_margin_compression, flag_inventory_buildup,
                        flag_receivables_buildup, flag_roa_deterioration
@@ -117,7 +117,7 @@ class Toolbox:
                 if k.startswith("flag_") and v
             ]
             lines.append(
-                f"{d['period_end']}: revenue={d['revenue']}, "
+                f"{d['period_end']} [{d['source_accn']}]: revenue={d['revenue']}, "
                 f"gross_margin={d['gross_margin']}, net_income={d['net_income']}, "
                 f"roa={d['roa']}, roe={d['roe']}, "
                 f"revenue_growth_yoy={d['revenue_growth_yoy']}, "
