@@ -6,11 +6,13 @@ from pydantic import ValidationError
 
 from palimpsest.agent.prompts import SYSTEM_PROMPT
 from palimpsest.agent.tools import Toolbox, build_registry
+from palimpsest.agent.validation import check_citations
 
 
 class MessagesState(TypedDict):
     messages: Annotated[list[dict], operator.add]
     iterations: int
+    citation_problems: list[str]
 
 
 def build_graph(conn, embedder, model, iter_cap: int = 8):
@@ -53,21 +55,28 @@ def build_graph(conn, embedder, model, iter_cap: int = 8):
 
         return {"messages": out}
 
+    def validator_node(state: MessagesState):
+        answer = state["messages"][-1]["content"]
+        problems = check_citations(conn, answer)
+        return {"citation_problems": problems}
+
     def should_continue(state: MessagesState) -> Literal["tool_node", END]:  # type: ignore
         if state["iterations"] >= iter_cap:
             return END
         if not state["messages"][-1].get("tool_calls"):
-            return END
+            return "validator_node"
         return "tool_node"
 
     agent_builder = StateGraph(MessagesState)
 
     agent_builder.add_node("agent_node", agent_node)
     agent_builder.add_node("tool_node", tool_node)
+    agent_builder.add_node("validator_node", validator_node)
 
     agent_builder.add_edge(START, "agent_node")
+    agent_builder.add_edge("validator_node", END)
     agent_builder.add_conditional_edges(
-        "agent_node", should_continue, ["tool_node", END]
+        "agent_node", should_continue, ["tool_node", "validator_node", END]
     )
     agent_builder.add_edge("tool_node", "agent_node")
 

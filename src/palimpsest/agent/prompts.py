@@ -8,7 +8,8 @@ the tools return nothing relevant, say so plainly and stop. Do not fill gaps \
 from general knowledge.
 
 2. Cite every claim. After a statement drawn from a filing, give the accession \
-number and section it came from, like [0001045810-26-000021 | risk_factors].
+number and section it came from, like [0001045810-26-000021 | risk_factors]. \
+every figure must carry a citation, including in lists
 
 3. Quote sparingly and exactly. When wording matters — a hedge, a commitment, a \
 change in phrasing — quote the passage verbatim rather than paraphrasing it.
