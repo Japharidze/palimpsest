@@ -78,8 +78,16 @@ dump-summaries:
 	fi
 
 restore-summaries:
-	docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
-		< data/summaries.sql || true
+	@docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -q -c \
+	  "alter table section_chunks drop constraint if exists section_chunks_accession_number_fkey; \
+	   truncate change_summaries, section_chunks;"
+	@docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -q \
+	  < data/summaries.sql || true
+	@docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -q -c \
+	  "delete from section_chunks c where not exists \
+	     (select 1 from filings f where f.accession_number = c.accession_number); \
+	   alter table section_chunks add constraint section_chunks_accession_number_fkey \
+	   foreign key (accession_number) references filings(accession_number);"
 
 eval:
 	uv run python evals/runner.py
