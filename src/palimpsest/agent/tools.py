@@ -5,6 +5,12 @@ from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
 from palimpsest.chunks import search
+from palimpsest.db import (
+    fetch_company_metrics,
+    fetch_company_recent_changes,
+    fetch_company_report_range,
+    resolve_cik,
+)
 from palimpsest.embedding import Embedder
 
 
@@ -15,17 +21,6 @@ class Toolbox:
     def __init__(self, pool, embedder: Embedder):
         self._pool = pool
         self._embedder = embedder
-
-    # ------------------------------------------------------------------ #
-
-    def _resolve_cik(self, ticker: str) -> str | None:
-        with self._pool.connection() as conn, conn.cursor() as cur:
-            cur.execute(
-                "select cik from company_tickers where ticker = %s",
-                (ticker.upper(),),
-            )
-            row = cur.fetchone()
-        return row[0] if row else None
 
     # ------------------------------------------------------------------ #
 
@@ -93,7 +88,7 @@ class Toolbox:
             until: ISO date; only quarters ending on or before it.
             quarters: Maximum number of quarters to return (default 4, max 12).
         """
-        cik = self._resolve_cik(ticker)
+        cik = resolve_cik(self._pool, ticker)
         if cik is None:
             return f"No company found for ticker {ticker!r}."
 
@@ -107,54 +102,20 @@ class Toolbox:
 
         quarters = max(1, min(quarters, 12))
 
-        with self._pool.connection() as conn, conn.cursor() as cur:
-            cur.execute(
-                """
-                    select source_accn, period_end, revenue, net_income,
-                        gross_margin_pct, roa_pct, roe_pct,
-                        revenue_growth_yoy_pct, inventory_growth_yoy_pct,
-                        receivables_growth_yoy_pct, runway_quarters,
-                        flag_margin_compression, flag_inventory_buildup,
-                        flag_receivables_buildup, flag_roa_deterioration,
-                        flag_short_runway
-                    from analytics.rpt_company_quarter
-                    where cik = %(cik)s
-                    and (%(since)s::date is null or period_end >= %(since)s)
-                    and (%(until)s::date is null or period_end <= %(until)s)
-                    order by period_end desc
-                    limit %(limit)s
-                    """,
-                {
-                    "cik": cik,
-                    "since": bounds["since"],
-                    "until": bounds["until"],
-                    "limit": quarters,
-                },
-            )
-            rows = cur.fetchall()
-            cols = [d.name for d in cur.description]
+        rows = fetch_company_metrics(
+            self._pool, cik, bounds["since"], bounds["until"], quarters
+        )
 
-        if not rows:
-            with self._pool.connection() as conn, conn.cursor() as cur:
-                cur.execute(
-                    """
-                        select min(period_end), max(period_end)
-                        from analytics.rpt_company_quarter
-                        where cik = %s
-                        """,
-                    (cik,),
-                )
-                earliest, latest = cur.fetchone()
-            if earliest is None:
-                return f"No quarterly metrics available for {ticker}."
-            return (
-                f"No quarters found for {ticker} in that range. "
-                f"Available quarters run from {earliest} to {latest}."
-            )
+        earliest, latest = fetch_company_report_range(self._pool, cik)
+        if earliest is None:
+            return f"No quarterly metrics available for {ticker}."
+        return (
+            f"No quarters found for {ticker} in that range. "
+            f"Available quarters run from {earliest} to {latest}."
+        )
 
         lines = []
-        for row in rows:
-            d: dict[str, Any] = dict(zip(cols, row))
+        for d in rows:
             flags = [
                 k.removeprefix("flag_")
                 for k, v in d.items()
@@ -197,65 +158,42 @@ class Toolbox:
             section: Optional section label to restrict to, e.g. "risk_factors".
             limit: Maximum number of changes to return (default 20).
         """
-        cik = self._resolve_cik(ticker)
+        cik = resolve_cik(self._pool, ticker)
         if cik is None:
             return f"No company found for ticker {ticker!r}."
 
-        with self._pool.connection() as conn, conn.cursor() as cur:
-            cur.execute(
-                """
-                    select label, change_type, from_accession, to_accession,
-                        from_filing_date, to_filing_date, similarity,
-                        summary, from_text, to_text
-                    from analytics.rpt_section_changes
-                    where cik = %s
-                    and (%s::text is null or label = %s)
-                    order by to_filing_date desc, label, position
-                    limit %s
-                    """,
-                (cik, section, section, limit),
-            )
-            rows = cur.fetchall()
+        rows = fetch_company_recent_changes(self._pool, cik, section, limit)
 
         if not rows:
             return f"No recorded changes for {ticker}."
 
         lines = []
-        for (
-            label,
-            ctype,
-            from_accn,
-            to_accn,
-            from_filed,
-            to_filed,
-            sim,
-            summary,
-            from_text,
-            to_text,
-        ) in rows:
-            if ctype == "removed":
-                source = f"cite {from_accn} (filed {from_filed})"
-                text = from_text or ""
-            elif ctype == "added":
-                source = f"cite {to_accn} (filed {to_filed})"
-                text = to_text or ""
+        for row in rows:
+            if row["change_type"] == "removed":
+                source = (
+                    f"cite {row['from_accession']} (filed {row['from_filing_date']})"
+                )
+                text = row["from_text"] or ""
+            elif row["change_type"] == "added":
+                source = f"cite {row['to_accession']} (filed {row['to_filing_date']})"
+                text = row["to_text"] or ""
             else:
                 source = (
-                    f"cite {from_accn} for the earlier wording, "
-                    f"{to_accn} for the current wording"
+                    f"cite {row['from_accession']} for the earlier wording, "
+                    f"{row['to_accession']} for the current wording"
                 )
-                text = to_text or from_text or ""
+                text = row["to_text"] or row["from_text"] or ""
 
-            header = f"[{label} | {ctype}"
-            if sim is not None:
-                header += f" | similarity {sim:.2f}"
+            header = f"[{row['label']} | {row['change_type']}"
+            if row["similarity"] is not None:
+                header += f" | similarity {row['similarity']:.2f}"
             header += f" | {source}]"
 
             body = ""
-            if summary:
-                body += f"Summary: {summary}\n"
-            if ctype == "modified" and from_text:
-                body += f"Was: {from_text[:400]}\nNow: {text[:400]}"
+            if row["summary"]:
+                body += f"Summary: {row['summary']}\n"
+            if row["change_type"] == "modified" and row["from_text"]:
+                body += f"Was: {row['from_text'][:400]}\nNow: {text[:400]}"
             else:
                 body += f"Text: {text[:600]}"
 

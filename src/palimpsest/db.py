@@ -1,3 +1,10 @@
+from datetime import date
+from typing import Any
+
+from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
+
+
 def _temp_table_query(table: str) -> str:
     return f"""
         create temp table tmp_{table} on commit drop as
@@ -244,3 +251,81 @@ def upsert_chunk(conn, row: tuple) -> bool:
 
         has_inserted = bool(cur.rowcount)
     return has_inserted
+
+
+def resolve_cik(pool, ticker: str) -> str | None:
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            "select cik from company_tickers where ticker = %s",
+            (ticker.upper(),),
+        )
+        row = cur.fetchone()
+    return row[0] if row else None
+
+
+def fetch_company_report_range(pool: ConnectionPool, cik: str) -> tuple[Any, Any]:
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+                select min(period_end), max(period_end)
+                from analytics.rpt_company_quarter
+                where cik = %s
+                """,
+            (cik,),
+        )
+        earliest, latest = cur.fetchone() or []
+    return earliest, latest
+
+
+def fetch_company_metrics(
+    pool: ConnectionPool, cik: str, since: date | None, until: date | None, limit: int
+) -> list[dict]:
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+                select source_accn, period_end, revenue, net_income,
+                    gross_margin_pct, roa_pct, roe_pct,
+                    revenue_growth_yoy_pct, inventory_growth_yoy_pct,
+                    receivables_growth_yoy_pct, runway_quarters,
+                    flag_margin_compression, flag_inventory_buildup,
+                    flag_receivables_buildup, flag_roa_deterioration,
+                    flag_short_runway
+                from analytics.rpt_company_quarter
+                where cik = %(cik)s
+                and (%(since)s::date is null or period_end >= %(since)s)
+                and (%(until)s::date is null or period_end <= %(until)s)
+                order by period_end desc
+                limit %(limit)s
+                """,
+            {
+                "cik": cik,
+                "since": since,
+                "until": until,
+                "limit": limit,
+            },
+        )
+        rows = cur.fetchall()
+
+    return rows
+
+
+def fetch_company_recent_changes(
+    pool: ConnectionPool, cik: str, section: str | None, limit: int
+) -> list[dict]:
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+                select label, change_type, from_accession, to_accession,
+                    from_filing_date, to_filing_date, similarity,
+                    summary, from_text, to_text
+                from analytics.rpt_section_changes
+                where cik = %s
+                and (%s::text is null or label = %s)
+                order by to_filing_date desc, label, position
+                limit %s
+                """,
+            (cik, section, section, limit),
+        )
+        rows = cur.fetchall()
+
+    return rows
