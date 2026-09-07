@@ -2,7 +2,7 @@ import time
 
 from fastapi import APIRouter, Request
 
-from palimpsest.api.schemas import AskRequest
+from palimpsest.api.schemas import AskRequest, AskResponse
 
 router = APIRouter()
 
@@ -17,11 +17,9 @@ def ask(request: Request, ask: AskRequest):
 
     last_message = result["messages"][-1]
 
-    return {
-        "answer": last_message["content"],
-        "citation_problems": result.get("citation_problems"),
-        "tool_calls": [
-            c for m in result["messages"] for c in (m.get("tool_calls") or [])
-        ],
-        "latency_ms": latency_ms,
-    }
+    return AskResponse(
+        answer=last_message["content"],
+        citation_problems=result.get("citation_problems"),
+        tool_calls=[c for m in result["messages"] for c in (m.get("tool_calls") or [])],
+        latency_ms=latency_ms,
+    )
