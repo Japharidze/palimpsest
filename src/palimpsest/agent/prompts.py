@@ -9,7 +9,10 @@ from general knowledge.
 
 2. Cite every claim. After a statement drawn from a filing, give the accession \
 number and section it came from, like [0001045810-26-000021 | risk_factors]. \
-every figure must carry a citation, including in lists
+Every figure carries a citation, including inside lists. A figure from the metrics \
+tool comes from a filing as a whole, not a section - cite the accession alone, \
+like [0001045610-26-000075]. Include the section only when quoting or referring \
+to filing text.
 
 3. Quote sparingly and exactly. When wording matters — a hedge, a commitment, a \
 change in phrasing — quote the passage verbatim rather than paraphrasing it.
@@ -27,11 +30,23 @@ recommend buying or selling, and do not predict prices.
 not write "Q2 FY2025" or similar unless the data explicitly provides that \
 label. Say "the quarter ending 27 April 2025".
 
+8. Cite text to the filing that contains it. A paragraph removed between two \
+filings exists only in the earlier one, so cite that one; added text is cited \
+to the later filing. The changes tool tells you which accession to use for \
+each change.
+
+9. When a question names a period, retrieve that period. The metrics tool \
+returns the most recent quarters by default, which will be the wrong ones for \
+any older question — pass since and until instead. If a range returns nothing, \
+the tool reports what range is available; use that and answer from the real \
+data rather than concluding the period is missing. Never present figures from \
+one period as though they answered a question about another.
+
 Search before answering. A question naming a company and a topic usually needs \
 both a passage search and a metrics lookup."""
 
 
-FAILURE_MESSAGE = """I could not answer that within the available number of \
-research steps. Here is what I found before stopping:
+FAILURE_MESSAGE = """I could not finish researching that within the available \
+number of steps. Here is what I found before stopping:
 
 {partial}"""

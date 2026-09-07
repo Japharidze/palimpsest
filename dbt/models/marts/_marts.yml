@@ -3,21 +3,23 @@ version: 2
 models:
   - name: fct_company_quarter
     description: >
-      One row per company per fiscal quarter, with each metric as column.
-      Flow metrics cover the quarter; balance metrics are the value at this
+      One row per company per fiscal quarter, with each metric as a column.
+      Flow metrics cover the quarter; balance metrics are the value at its
       end. Fourth-quarter flows may be derived rather than reported.
     columns:
       - name: cik
         tests: [not_null]
       - name: period_end
         tests: [not_null]
+      - name: source_accn
+        description: The filing that reported this period's figures.
       - name: revenue_is_derived
         description: True when the value was computed from the annual figure rather than reported.
 
   - name: fct_company_year
     description: >
-      Quarterly metrics with ratios, year-over-year growth, and red-flag
-      columns. One row per company per quarter, most recent first.
+      One row per company per fiscal year, with each metric as a column.
+      Covers annual-only filers that publish no quarterly reports.
     columns:
       - name: cik
         tests: [not_null]
@@ -27,14 +29,26 @@ models:
   - name: rpt_company_quarter
     description: >
       Quarterly metrics with ratios, year-over-year growth, and red-flag
-      columns. One row per company per quarter, most recent first.
+      columns. One row per company per quarter, most recent first. Ratios are
+      exposed as rounded percentages; the underlying full-precision values are
+      used for the flag thresholds but are not selected.
     columns:
-      - name: gross_margin
-        description: Revenue less cost of revenue, over revenue.
-      - name: roa
-        description: Net income over average total assets for the quarter.
-      - name: roe
-        description: Net income over average shareholders' qeuity for the quarter.
+      - name: source_accn
+        description: The filing that reported this period's figures, for citation.
+      - name: gross_margin_pct
+        description: Revenue less cost of revenue, over revenue, as a percentage.
+      - name: roa_pct
+        description: Net income over average total assets for the quarter, as a percentage.
+      - name: roe_pct
+        description: Net income over average shareholders' equity for the quarter, as a percentage.
+      - name: revenue_growth_yoy_pct
+        description: Revenue change against the same quarter last year, as a percentage.
+      - name: inventory_growth_yoy_pct
+        description: Inventory change against the same quarter last year, as a percentage.
+      - name: receivables_growth_yoy_pct
+        description: Receivables change against the same quarter last year, as a percentage.
+      - name: gross_margin_yoy_delta_pct
+        description: Change in gross margin against the same quarter last year, in percentage points.
       - name: runway_quarters
         description: Cash divided by the quarter's operating outflow; null unless cash flow is negative.
       - name: flag_margin_compression
@@ -43,11 +57,36 @@ models:
         description: Inventory grew more than 10 points faster than revenue year over year.
       - name: flag_receivables_buildup
         description: Receivables grew more than 10 points faster than revenue year over year.
+      - name: flag_roa_deterioration
+        description: Return on assets fell more than 100 basis points against the same quarter last year.
+      - name: flag_short_runway
+        description: Fewer than four quarters of cash at the current burn rate.
+
+  - name: rpt_section_changes
+    description: >
+      One row per changed paragraph between a company's consecutive filings of
+      the same form and section, with the model-written summary where one
+      exists.
+    columns:
+      - name: change_type
+        description: Whether the paragraph was added, removed, or modified.
+      - name: similarity
+        description: How close the two versions are, from 0 to 1; null unless modified.
+      - name: summary
+        description: One-sentence description of the change; null until summarized.
+
+  - name: rpt_change_digest
+    description: >
+      Counts of added, removed and modified paragraphs per company, form,
+      section and filing pair.
+    columns:
+      - name: lowest_similarity
+        description: The most heavily reworded paragraph in that section.
 
   - name: rpt_restatements
     description: >
-      Periods where a company reported more than one value from the same
-      metric across filings, with the size of the change.
+      Periods where a company reported more than one value for the same metric
+      across filings, with the size of the change.
     columns:
       - name: version_count
         description: Number of distinct values reported for this period.

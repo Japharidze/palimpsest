@@ -8,7 +8,6 @@ with
             c.name as company_name,
             q.period_end,
             q.source_accn,
-
             q.revenue,
             q.cost_of_revenue,
             q.net_income,
@@ -20,12 +19,10 @@ with
             q.cash,
             q.revenue_is_derived,
 
-            -- ratios
             case
                 when q.revenue > 0 then (q.revenue - q.cost_of_revenue) / q.revenue
             end as gross_margin,
 
-            -- averaged denominators for return ratios
             (q.total_assets + lag(q.total_assets) over w) / 2 as avg_assets,
             (q.stockholders_equity + lag(q.stockholders_equity) over w)
             / 2 as avg_equity,
@@ -58,26 +55,62 @@ with
                 then cash / abs(operating_cash_flow)
             end as runway_quarters
         from base
+    ),
+
+    computed as (
+        select
+            *,
+            gross_margin - lag(gross_margin, 4) over w as gross_margin_yoy_delta,
+            roa - lag(roa, 4) over w as roa_yoy_delta,
+            roe - lag(roe, 4) over w as roe_yoy_delta,
+
+            coalesce(
+                gross_margin - lag(gross_margin, 4) over w < -0.02, false
+            ) as flag_margin_compression,
+            coalesce(
+                inventory_growth_yoy - revenue_growth_yoy > 0.10, false
+            ) as flag_inventory_buildup,
+            coalesce(
+                receivables_growth_yoy - revenue_growth_yoy > 0.10, false
+            ) as flag_receivables_buildup,
+            coalesce(roa - lag(roa, 4) over w < -0.01, false) as flag_roa_deterioration,
+            coalesce(runway_quarters < 4, false) as flag_short_runway
+        from ratios
+        window w as (partition by cik order by period_end)
     )
 
 select
-    *,
-    gross_margin - lag(gross_margin, 4) over w as gross_margin_yoy_delta,
-    roa - lag(roa, 4) over w as roa_yoy_delta,
-    roe - lag(roe, 4) over w as roe_yoy_delta,
+    cik,
+    company_name,
+    period_end,
+    source_accn,
 
-    -- flags
-    coalesce(
-        gross_margin - lag(gross_margin, 4) over w < -0.02, false
-    ) as flag_margin_compression,
-    coalesce(
-        inventory_growth_yoy - revenue_growth_yoy > 0.10, false
-    ) as flag_inventory_buildup,
-    coalesce(
-        receivables_growth_yoy - revenue_growth_yoy > 0.10, false
-    ) as flag_receivables_buildup,
-    coalesce(roa - lag(roa, 4) over w < -0.01, false) as flag_roa_deterioration,
-    coalesce(runway_quarters < 4, false) as flag_short_runway
-from ratios
-window w as (partition by cik order by period_end)
+    revenue,
+    cost_of_revenue,
+    net_income,
+    operating_cash_flow,
+    total_assets,
+    stockholders_equity,
+    inventory,
+    receivables,
+    cash,
+    revenue_is_derived,
+
+    round(gross_margin * 100, 1) as gross_margin_pct,
+    round(roa * 100, 1) as roa_pct,
+    round(roe * 100, 1) as roe_pct,
+    round(revenue_growth_yoy * 100, 1) as revenue_growth_yoy_pct,
+    round(inventory_growth_yoy * 100, 1) as inventory_growth_yoy_pct,
+    round(receivables_growth_yoy * 100, 1) as receivables_growth_yoy_pct,
+    round(gross_margin_yoy_delta * 100, 1) as gross_margin_yoy_delta_pct,
+    round(roa_yoy_delta * 100, 1) as roa_yoy_delta_pct,
+    round(roe_yoy_delta * 100, 1) as roe_yoy_delta_pct,
+    round(runway_quarters, 1) as runway_quarters,
+
+    flag_margin_compression,
+    flag_inventory_buildup,
+    flag_receivables_buildup,
+    flag_roa_deterioration,
+    flag_short_runway
+from computed
 order by cik, period_end desc

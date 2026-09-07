@@ -75,38 +75,82 @@ class Toolbox:
 
     # ------------------------------------------------------------------ #
 
-    def get_company_metrics(self, ticker: str, quarters: int = 4) -> str:
-        """Get recent quarterly financial metrics and red flags for a company.
+    def get_company_metrics(
+        self,
+        ticker: str,
+        since: str | None = None,
+        until: str | None = None,
+        quarters: int = 4,
+    ) -> str:
+        """Get quarterly financial metrics and red flags for a company.
+
+        Returns the most recent quarters unless a date range is given. To ask
+        about an older period, pass since and until.
 
         Args:
             ticker: Stock ticker, e.g. "MSFT".
-            quarters: How many recent quarters to return (default 4, max 12).
+            since: ISO date; only quarters ending on or after it.
+            until: ISO date; only quarters ending on or before it.
+            quarters: Maximum number of quarters to return (default 4, max 12).
         """
         cik = self._resolve_cik(ticker)
         if cik is None:
             return f"No company found for ticker {ticker!r}."
+
+        bounds: dict[str, date | None] = {"since": None, "until": None}
+        for name, raw in (("since", since), ("until", until)):
+            if raw:
+                try:
+                    bounds[name] = date.fromisoformat(raw)
+                except ValueError:
+                    return f"Invalid {name} date {raw!r}; expected YYYY-MM-DD."
 
         quarters = max(1, min(quarters, 12))
 
         with self._conn.cursor() as cur:
             cur.execute(
                 """
-                select source_accn, period_end, revenue, gross_margin, net_income,
-                       roa, roe, revenue_growth_yoy, inventory_growth_yoy,
-                       flag_margin_compression, flag_inventory_buildup,
-                       flag_receivables_buildup, flag_roa_deterioration
-                from analytics.rpt_company_quarter
-                where cik = %s
-                order by period_end desc
-                limit %s
-                """,
-                (cik, quarters),
+                    select source_accn, period_end, revenue, net_income,
+                        gross_margin_pct, roa_pct, roe_pct,
+                        revenue_growth_yoy_pct, inventory_growth_yoy_pct,
+                        receivables_growth_yoy_pct, runway_quarters,
+                        flag_margin_compression, flag_inventory_buildup,
+                        flag_receivables_buildup, flag_roa_deterioration,
+                        flag_short_runway
+                    from analytics.rpt_company_quarter
+                    where cik = %(cik)s
+                    and (%(since)s::date is null or period_end >= %(since)s)
+                    and (%(until)s::date is null or period_end <= %(until)s)
+                    order by period_end desc
+                    limit %(limit)s
+                    """,
+                {
+                    "cik": cik,
+                    "since": bounds["since"],
+                    "until": bounds["until"],
+                    "limit": quarters,
+                },
             )
             rows = cur.fetchall()
             cols = [d.name for d in cur.description]
 
         if not rows:
-            return f"No quarterly metrics available for {ticker}."
+            with self._conn.cursor() as cur:
+                cur.execute(
+                    """
+                        select min(period_end), max(period_end)
+                        from analytics.rpt_company_quarter
+                        where cik = %s
+                        """,
+                    (cik,),
+                )
+                earliest, latest = cur.fetchone()
+            if earliest is None:
+                return f"No quarterly metrics available for {ticker}."
+            return (
+                f"No quarters found for {ticker} in that range. "
+                f"Available quarters run from {earliest} to {latest}."
+            )
 
         lines = []
         for row in rows:
@@ -116,13 +160,22 @@ class Toolbox:
                 for k, v in d.items()
                 if k.startswith("flag_") and v
             ]
-            lines.append(
-                f"{d['period_end']} [{d['source_accn']}]: revenue={d['revenue']}, "
-                f"gross_margin={d['gross_margin']}, net_income={d['net_income']}, "
-                f"roa={d['roa']}, roe={d['roe']}, "
-                f"revenue_growth_yoy={d['revenue_growth_yoy']}, "
-                f"flags={', '.join(flags) or 'none'}"
-            )
+            parts = [
+                f"revenue={d['revenue']}",
+                f"net_income={d['net_income']}",
+                f"gross_margin={d['gross_margin_pct']}%",
+                f"roa={d['roa_pct']}%",
+                f"roe={d['roe_pct']}%",
+                f"revenue_growth_yoy={d['revenue_growth_yoy_pct']}%",
+                f"inventory_growth_yoy={d['inventory_growth_yoy_pct']}%",
+                f"receivables_growth_yoy={d['receivables_growth_yoy_pct']}%",
+            ]
+            if d["runway_quarters"] is not None:
+                parts.append(f"runway_quarters={d['runway_quarters']}")
+            parts.append(f"flags={', '.join(flags) or 'none'}")
+
+            lines.append(f"{d['period_end']} [{d['source_accn']}]: " + ", ".join(parts))
+
         return f"Quarterly metrics for {ticker}:\n" + "\n".join(lines)
 
     # ------------------------------------------------------------------ #
@@ -134,6 +187,10 @@ class Toolbox:
         limit: int = 20,
     ) -> str:
         """Get paragraphs that changed between a company's two most recent filings.
+
+        Each change names two filings: the earlier one it came from and the
+        later one it went to. Removed text exists only in the earlier filing;
+        added text only in the later one.
 
         Args:
             ticker: Stock ticker, e.g. "NVDA".
@@ -147,14 +204,15 @@ class Toolbox:
         with self._conn.cursor() as cur:
             cur.execute(
                 """
-                select label, change_type, to_filing_date, similarity,
-                       summary, from_text, to_text
-                from analytics.rpt_section_changes
-                where cik = %s
-                  and (%s::text is null or label = %s)
-                order by to_filing_date desc, label, position
-                limit %s
-                """,
+                    select label, change_type, from_accession, to_accession,
+                        from_filing_date, to_filing_date, similarity,
+                        summary, from_text, to_text
+                    from analytics.rpt_section_changes
+                    where cik = %s
+                    and (%s::text is null or label = %s)
+                    order by to_filing_date desc, label, position
+                    limit %s
+                    """,
                 (cik, section, section, limit),
             )
             rows = cur.fetchall()
@@ -163,15 +221,46 @@ class Toolbox:
             return f"No recorded changes for {ticker}."
 
         lines = []
-        for label, ctype, filed, sim, summary, from_text, to_text in rows:
-            text = to_text or from_text or ""
-            lines.append(
-                f"[{filed} | {label} | {ctype}"
-                + (f" | similarity {sim:.2f}" if sim is not None else "")
-                + "]\n"
-                + (f"Summary: {summary}\n" if summary else "")
-                + f"Text: {text[:600]}"
-            )
+        for (
+            label,
+            ctype,
+            from_accn,
+            to_accn,
+            from_filed,
+            to_filed,
+            sim,
+            summary,
+            from_text,
+            to_text,
+        ) in rows:
+            if ctype == "removed":
+                source = f"cite {from_accn} (filed {from_filed})"
+                text = from_text or ""
+            elif ctype == "added":
+                source = f"cite {to_accn} (filed {to_filed})"
+                text = to_text or ""
+            else:
+                source = (
+                    f"cite {from_accn} for the earlier wording, "
+                    f"{to_accn} for the current wording"
+                )
+                text = to_text or from_text or ""
+
+            header = f"[{label} | {ctype}"
+            if sim is not None:
+                header += f" | similarity {sim:.2f}"
+            header += f" | {source}]"
+
+            body = ""
+            if summary:
+                body += f"Summary: {summary}\n"
+            if ctype == "modified" and from_text:
+                body += f"Was: {from_text[:400]}\nNow: {text[:400]}"
+            else:
+                body += f"Text: {text[:600]}"
+
+            lines.append(header + "\n" + body)
+
         return f"Recent changes for {ticker}:\n\n" + "\n\n".join(lines)
 
 
@@ -197,9 +286,14 @@ class SearchChunksInput(BaseModel):
 
 class GetCompanyMetricsInput(BaseModel):
     ticker: str = Field(description="Stock ticker, e.g. 'MSFT'.")
-    quarters: int = Field(
-        default=4, description="How many recent quarters to return (default 4, max 12)."
+    since: str | None = Field(
+        default=None,
+        description="ISO date. Required when asking about any period other than the most recent quarters.",
     )
+    until: str | None = Field(
+        default=None, description="ISO date, upper bound on period end."
+    )
+    quarters: int = Field(default=4, description="Maximum quarters to return (max 12).")
 
 
 class GetRecentChangesInput(BaseModel):

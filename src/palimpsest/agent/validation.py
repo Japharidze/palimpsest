@@ -1,15 +1,41 @@
 import re
 
-# Matches [0001045810-26-000075] and [0001045810-26-000075 | part_i_item_2]
+ACCESSION = r"\d{10}-\d{2}-\d{6}"
+
+# Matches a bracket holding one or more accessions and an optional label:
+#   [0001045810-26-000075]
+#   [0001045810-26-000075 | part_i_item_2]
+#   [0001045810-25-000023 and 0001045810-25-000116 | metrics]
+#   [0001045810-25-000023; 0001045810-25-000116]
 CITATION_RE = re.compile(
-    r"\[\s*(\d{10}-\d{2}-\d{6})\s*(?:\|\s*([a-z0-9_]+)\s*)?\]",
+    rf"\[\s*({ACCESSION}(?:\s*(?:,|;|and)\s*{ACCESSION})*)"
+    rf"\s*(?:\|\s*([a-z0-9_ ]+?)\s*)?\]",
     re.IGNORECASE,
 )
 
-# Matches "quoted text" of at least a few words
+SPLIT_RE = re.compile(r"\s*(?:,|;|and)\s*", re.IGNORECASE)
+
+# Quoted passages of at least a few words
 QUOTE_RE = re.compile(r"[\"“]([^\"”]{20,})[\"”]")
- 
- 
+
+# Labels that name a source rather than a filing section. A figure taken from
+# the metrics tool has no section, so these are not checked against
+# filing_sections.
+NON_SECTION_LABELS = {"metrics", "xbrl", "financial data", "changes"}
+
+
+def _parse_citations(answer: str) -> list[tuple[str, str | None]]:
+    """Return (accession, label) pairs, one per accession."""
+    pairs: list[tuple[str, str | None]] = []
+    for accns, label in CITATION_RE.findall(answer):
+        label = (label or "").strip().lower() or None
+        for accn in SPLIT_RE.split(accns):
+            accn = accn.strip()
+            if accn:
+                pairs.append((accn, label))
+    return pairs
+
+
 def _known_accessions(conn, accessions: list[str]) -> set[str]:
     if not accessions:
         return set()
@@ -21,35 +47,46 @@ def _known_accessions(conn, accessions: list[str]) -> set[str]:
         return {row[0] for row in cur.fetchall()}
 
 
-def _known_sections(conn, pairs: list[tuple[str, str]]) -> set[tuple[str, str]]:
-    if not pairs:
+def _known_sections(conn, accessions: list[str]) -> set[tuple[str, str]]:
+    """Every (accession, section) pair, by raw key and by mapped label."""
+    if not accessions:
         return set()
-    accns = [a for a, _ in pairs]
     with conn.cursor() as cur:
         cur.execute(
             """
-            select accession_number, section
-            from filing_sections
-            where accession_number = any(%s)
+            select s.accession_number, s.section, sl.label
+            from filing_sections s
+            join filings f using (accession_number)
+            left join analytics.section_labels sl
+                on sl.form = replace(f.form, '/A', '')
+               and sl.section_key = s.section
+            where s.accession_number = any(%s)
             """,
-            (accns,),
+            (accessions,),
         )
-        return {(row[0], row[1]) for row in cur.fetchall()}
+        pairs: set[tuple[str, str]] = set()
+        for accn, section, label in cur.fetchall():
+            pairs.add((accn, section.lower()))
+            if label:
+                pairs.add((accn, label.lower()))
+        return pairs
 
 
 def _quote_found(conn, quote: str, accessions: list[str]) -> bool:
-    """True if the quote appears verbatim in any cited filing's sections."""
-    normalized = re.sub(r"\s+", " ", quote).strip()
+    """True if the quote appears in any cited filing, ignoring whitespace."""
+    normalized = re.sub(r"[\s\u00a0]+", " ", quote).strip()
+    if not normalized:
+        return True
     with conn.cursor() as cur:
         cur.execute(
             """
             select 1
             from filing_sections
             where accession_number = any(%s)
-              and regexp_replace(content, '\\s+', ' ', 'g') like %s
+              and regexp_replace(content, '[\\s\\u00a0]+', ' ', 'g') ilike %s
             limit 1
             """,
-            (accessions, f"%{normalized}%"),
+            (accessions, "%" + normalized.replace("%", r"\%") + "%"),
         )
         return cur.fetchone() is not None
 
@@ -57,27 +94,30 @@ def _quote_found(conn, quote: str, accessions: list[str]) -> bool:
 def check_citations(conn, answer: str) -> list[str]:
     """Return a list of problems found in an answer's citations."""
     problems: list[str] = []
- 
-    citations = CITATION_RE.findall(answer)
+
+    citations = _parse_citations(answer)
     if not citations:
         return ["no citations found"]
- 
+
     accessions = [a for a, _ in citations]
     known = _known_accessions(conn, accessions)
-    for accn in set(accessions):
+    for accn in sorted(set(accessions)):
         if accn not in known:
             problems.append(f"unknown filing {accn}")
- 
-    pairs = [(a, s) for a, s in citations if s and a in known]
-    known_pairs = _known_sections(conn, pairs)
-    for accn, section in set(pairs):
-        if (accn, section) not in known_pairs:
-            problems.append(f"section {section!r} not found in {accn}")
- 
-    valid_accns = sorted(known)
+
+    valid = sorted(known)
+    section_pairs = _known_sections(conn, valid)
+    for accn, label in sorted(set(citations), key=lambda p: (p[0], p[1] or "")):
+        if accn not in known or label is None:
+            continue
+        if label in NON_SECTION_LABELS:
+            continue
+        if (accn, label) not in section_pairs:
+            problems.append(f"section {label!r} not found in {accn}")
+
     for quote in QUOTE_RE.findall(answer):
-        if valid_accns and not _quote_found(conn, quote, valid_accns):
+        if valid and not _quote_found(conn, quote, valid):
             snippet = quote[:60] + ("…" if len(quote) > 60 else "")
             problems.append(f'quote not found in cited filings: "{snippet}"')
- 
+
     return problems
