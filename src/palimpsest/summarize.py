@@ -34,5 +34,5 @@ def summarize_label_changes(llm_client, changes: list[tuple]) -> Generator[tuple
         if template is None:
             continue
         prompt = template.format(label=label, from_text=from_text, to_text=to_text)
-        completion = llm_client.complete(prompt)
-        yield (text_hash, completion.text, completion.model, datetime.now(tz=UTC))
+        response = llm_client.invoke(prompt)
+        yield (text_hash, response.content, response.response_metadata["model"], datetime.now(tz=UTC))

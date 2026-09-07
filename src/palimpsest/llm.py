@@ -49,7 +49,8 @@ class AnthropicLLM:
 
 def build_llm(provider: str, model: str, api_key: str | None = None):
     if provider == "ollama":
-        return OllamaLLM(model=model)
+        from langchain_ollama import ChatOllama
+        return ChatOllama(model=model)
     if provider == "anthropic":
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY not set")

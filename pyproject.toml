@@ -13,6 +13,7 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "httpx>=0.28.1",
     "langchain-anthropic==1.7.0",
+    "langchain-ollama>=1.1.0",
     "langchain-text-splitters>=1.1.2",
     "langgraph>=1.2.11",
     "lxml>=6.1.2",
