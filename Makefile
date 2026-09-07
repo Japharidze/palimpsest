@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking eval
+.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking eval api
 
 PSQL_CMD = PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB)
 
@@ -83,3 +83,6 @@ restore-summaries:
 
 eval:
 	uv run python evals/runner.py
+
+api:
+	uv run uvicorn palimpsest.api.main:app --reload --port 8000
