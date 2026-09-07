@@ -329,3 +329,52 @@ def fetch_company_recent_changes(
         rows = cur.fetchall()
 
     return rows
+
+
+def fetch_watchlist(pool: ConnectionPool) -> list[dict]:
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("""
+            with lf as (
+            select
+                distinct
+                cik,
+                max(filing_date) over (partition by cik
+            order by
+                filing_date desc) latest_filing_date,
+                max(accession_number) over (partition by cik
+            order by
+                filing_date desc) latest_accn
+            from
+                filings)
+            select
+                string_agg(distinct(ct.ticker), '; ') ticker,
+                c.name,
+                rpt.flag_inventory_buildup,
+                rpt.flag_receivables_buildup,
+                rpt.flag_roa_deterioration,
+                rpt.flag_short_runway,
+                rpt.flag_margin_compression,
+                lf.latest_filing_date
+            from
+                watchlist w
+            join companies c on
+                w.cik = c.cik
+            join company_tickers ct on
+                w.cik = ct.cik
+            join lf lf on 
+                w.cik = lf.cik
+            join analytics.rpt_company_quarter rpt on
+                lf.latest_accn = rpt.source_accn
+            group by
+                w.cik,
+                c.name,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+        """)
+        rows = cur.fetchall()
+
+    return rows
