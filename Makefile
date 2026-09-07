@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking
+.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking eval
 
 PSQL_CMD = PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB)
 
@@ -80,3 +80,6 @@ dump-summaries:
 restore-summaries:
 	docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
 		< data/summaries.sql || true
+
+eval:
+	uv run python evals/runner.py

@@ -1,0 +1,184 @@
+# Golden question set for Palimpsest.
+#
+# Every expected value here came from a query against the warehouse, not from
+# memory. When the data is re-synced, figures tied to "most recent" will move;
+# questions are written with explicit dates so they stay fixed.
+#
+# Fields:
+#   id            stable identifier, used in the report
+#   shape         which archetype this tests
+#   question      what is asked
+#   expect.contains        substrings that must appear in the answer
+#   expect.absent          substrings that must NOT appear
+#   expect.tools           tool names that must have been called
+#   expect.citations_valid whether the citation check must pass
+#   note          why this question is in the set
+
+- id: point_nvda_margin
+  shape: point_lookup
+  question: "What was NVIDIA's gross margin in the quarter ending 26 July 2026?"
+  expect:
+    contains: ["75.0", "0001045810-26-000075"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: Simplest possible case. If this fails, nothing else matters.
+
+- id: point_googl_revenue
+  shape: point_lookup
+  question: "What revenue did Alphabet report for the quarter ending 30 June 2026?"
+  expect:
+    contains: ["119", "0001652044-26-000071"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: Revenue is 119,796,000,000; the model may write 119.8 billion or $119,796 million.
+
+- id: point_rddt_net_income
+  shape: point_lookup
+  question: "What was Reddit's net income in the quarter ending 30 June 2026?"
+  expect:
+    contains: ["252", "0001713445-26-000100"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: Small filer, figures in millions rather than billions.
+
+- id: point_ko_revenue
+  shape: point_lookup
+  question: "What revenue did Coca-Cola report for the quarter ending 3 April 2026?"
+  expect:
+    contains: ["12", "0001628280-26-028802"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: Non-calendar quarter end. Tests that the model uses the date given.
+
+- id: compare_nvda_margin_dip
+  shape: comparison
+  question: "How did NVIDIA's gross margin change between the quarters ending 26 January 2025 and 27 April 2025?"
+  expect:
+    contains: ["73.0", "60.5", "0001045810-25-000116"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: The largest single-quarter margin move in the data, a 12.5 point fall.
+
+- id: compare_nvda_margin_recovery
+  shape: comparison
+  question: "Did NVIDIA's gross margin improve between the quarters ending 27 April 2025 and 27 July 2025?"
+  expect:
+    contains: ["60.5", "72.4", "0001045810-25-000209"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: The recovery leg. Answer should be yes, with both figures.
+
+- id: compare_msft_margin_2015
+  shape: comparison
+  question: "How did Microsoft's gross margin change between the quarters ending 30 September 2015 and 31 December 2015?"
+  expect:
+    contains: ["58.5", "0001193125-16-441821"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: Old period, tests that history beyond the recent window is reachable.
+
+- id: change_nvda_risk_removed
+  shape: change_detection
+  question: "What risk factor disclosures did NVIDIA drop in its 10-Q filed 26 August 2026?"
+  expect:
+    contains: ["0001045810-26-000075"]
+    tools: ["get_recent_changes"]
+    citations_valid: true
+  note: >
+    Many paragraphs were removed, including the competition risk factor and the
+    demand-estimation list. Any of them is a correct answer, so this asserts the
+    right tool and a valid citation rather than specific text.
+
+- id: change_nvda_competition
+  shape: change_detection
+  question: "Has NVIDIA changed what it says about competition in its most recent quarterly filing?"
+  expect:
+    contains: ["0001045810-26-000075"]
+    tools: ["get_recent_changes"]
+    citations_valid: true
+  note: >
+    "Competition could adversely impact our market share and financial results"
+    was removed in that filing.
+
+- id: attribution_nvda_margin
+  shape: attribution
+  question: "Why did NVIDIA's gross margin fall in the quarter ending 27 April 2025? Quote what management said."
+  expect:
+    contains: ["H20", "0001045810-25-000116"]
+    tools: ["search_chunks"]
+    citations_valid: true
+  note: >
+    MD&A attributes it to a $4.5 billion charge for H20 excess inventory and
+    purchase obligations. Tests that prose is retrieved, not just numbers.
+
+- id: attribution_googl_tac
+  shape: attribution
+  question: "How does Alphabet explain traffic acquisition costs on Google Network properties?"
+  expect:
+    contains: ["TAC", "0001652044"]
+    tools: ["search_chunks"]
+    citations_valid: true
+  note: >
+    The MD&A passage explains that most advertiser revenue from Network
+    properties is paid out as TAC to partners.
+
+- id: absence_nvda_going_concern
+  shape: absence
+  question: "Does NVIDIA disclose substantial doubt about its ability to continue as a going concern?"
+  expect:
+    contains: ["not"]
+    absent: ["0001045810-2"]
+    citations_valid: true
+  note: >
+    Zero mentions across 482 sections. The answer must say the filings do not
+    contain this and must not invent a citation. This is the hallucination test.
+
+- id: absence_msft_going_concern
+  shape: absence
+  question: "Has Microsoft disclosed a material weakness in internal control over financial reporting?"
+  expect:
+    contains: ["not"]
+    citations_valid: true
+  note: Zero mentions across 495 sections.
+
+- id: absence_rddt_going_concern
+  shape: absence
+  question: "Does Reddit's filing include going-concern language?"
+  expect:
+    contains: ["not"]
+    citations_valid: true
+  note: >
+    Zero mentions across 263 sections. Reddit is a recent IPO with a short
+    history, which is where a model is most tempted to guess.
+
+- id: cross_nvda_googl_margin
+  shape: cross_company
+  question: "Whose gross margin was higher in mid-2026, NVIDIA or Alphabet?"
+  expect:
+    contains: ["75.0", "61.6", "NVIDIA"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: >
+    NVIDIA 75.0% for the quarter ending 26 July 2026; Alphabet 61.6% for the
+    quarter ending 30 June 2026. Requires two tool calls.
+
+- id: cross_nvda_googl_roe
+  shape: cross_company
+  question: "Compare return on equity for NVIDIA and Alphabet in their most recent reported quarters."
+  expect:
+    contains: ["28", "20"]
+    tools: ["get_company_metrics"]
+    citations_valid: true
+  note: NVIDIA 28.1%, Alphabet 20.0%. Tests a metric other than margin.
+
+- id: cross_missing_margin
+  shape: cross_company
+  question: "What was JPMorgan's gross margin in the quarter ending 30 June 2026?"
+  expect:
+    contains: ["not"]
+    citations_valid: true
+  note: >
+    Banks report no cost of revenue, so gross margin is null. The answer must
+    say the metric is unavailable rather than computing or inventing one.
+    This is a second hallucination test, on a missing field rather than a
+    missing disclosure.
