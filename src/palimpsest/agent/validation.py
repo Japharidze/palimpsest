@@ -36,10 +36,10 @@ def _parse_citations(answer: str) -> list[tuple[str, str | None]]:
     return pairs
 
 
-def _known_accessions(conn, accessions: list[str]) -> set[str]:
+def _known_accessions(pool, accessions: list[str]) -> set[str]:
     if not accessions:
         return set()
-    with conn.cursor() as cur:
+    with pool.connection() as conn, conn.cursor() as cur:
         cur.execute(
             "select accession_number from filings where accession_number = any(%s)",
             (accessions,),
@@ -47,11 +47,11 @@ def _known_accessions(conn, accessions: list[str]) -> set[str]:
         return {row[0] for row in cur.fetchall()}
 
 
-def _known_sections(conn, accessions: list[str]) -> set[tuple[str, str]]:
+def _known_sections(pool, accessions: list[str]) -> set[tuple[str, str]]:
     """Every (accession, section) pair, by raw key and by mapped label."""
     if not accessions:
         return set()
-    with conn.cursor() as cur:
+    with pool.connection() as conn, conn.cursor() as cur:
         cur.execute(
             """
             select s.accession_number, s.section, sl.label
@@ -72,12 +72,12 @@ def _known_sections(conn, accessions: list[str]) -> set[tuple[str, str]]:
         return pairs
 
 
-def _quote_found(conn, quote: str, accessions: list[str]) -> bool:
+def _quote_found(pool, quote: str, accessions: list[str]) -> bool:
     """True if the quote appears in any cited filing, ignoring whitespace."""
     normalized = re.sub(r"[\s\u00a0]+", " ", quote).strip()
     if not normalized:
         return True
-    with conn.cursor() as cur:
+    with pool.connection() as conn, conn.cursor() as cur:
         cur.execute(
             """
             select 1
@@ -91,7 +91,7 @@ def _quote_found(conn, quote: str, accessions: list[str]) -> bool:
         return cur.fetchone() is not None
 
 
-def check_citations(conn, answer: str) -> list[str]:
+def check_citations(pool, answer: str) -> list[str]:
     """Return a list of problems found in an answer's citations."""
     problems: list[str] = []
 
@@ -100,13 +100,13 @@ def check_citations(conn, answer: str) -> list[str]:
         return ["no citations found"]
 
     accessions = [a for a, _ in citations]
-    known = _known_accessions(conn, accessions)
+    known = _known_accessions(pool, accessions)
     for accn in sorted(set(accessions)):
         if accn not in known:
             problems.append(f"unknown filing {accn}")
 
     valid = sorted(known)
-    section_pairs = _known_sections(conn, valid)
+    section_pairs = _known_sections(pool, valid)
     for accn, label in sorted(set(citations), key=lambda p: (p[0], p[1] or "")):
         if accn not in known or label is None:
             continue
@@ -116,7 +116,7 @@ def check_citations(conn, answer: str) -> list[str]:
             problems.append(f"section {label!r} not found in {accn}")
 
     for quote in QUOTE_RE.findall(answer):
-        if valid and not _quote_found(conn, quote, valid):
+        if valid and not _quote_found(pool, quote, valid):
             snippet = quote[:60] + ("…" if len(quote) > 60 else "")
             problems.append(f'quote not found in cited filings: "{snippet}"')
 

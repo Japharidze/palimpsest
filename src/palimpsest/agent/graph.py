@@ -15,8 +15,8 @@ class MessagesState(TypedDict):
     citation_problems: list[str]
 
 
-def build_graph(conn, embedder, model, iter_cap: int = 8):
-    tools = build_registry(Toolbox(conn, embedder))
+def build_graph(pool, embedder, model, iter_cap: int = 8):
+    tools = build_registry(Toolbox(pool, embedder))
     model_with_tools = model.bind_tools(list(tools.values()))
 
     def agent_node(state: MessagesState):
@@ -57,7 +57,7 @@ def build_graph(conn, embedder, model, iter_cap: int = 8):
 
     def validator_node(state: MessagesState):
         answer = state["messages"][-1]["content"]
-        problems = check_citations(conn, answer)
+        problems = check_citations(pool, answer)
         return {"citation_problems": problems}
 
     def should_continue(state: MessagesState) -> Literal["tool_node", END]:  # type: ignore

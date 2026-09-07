@@ -2,6 +2,7 @@ from typing import Annotated
 
 import psycopg
 import typer
+from psycopg_pool import ConnectionPool
 from httpx import HTTPStatusError
 from psycopg.rows import scalar_row
 from typer import progressbar
@@ -297,8 +298,8 @@ def debug_graph_cmd(
     embedder = OllamaEmbedder(settings.embedding_model)
     agent_model = build_llm(settings.agent_provider, settings.agent_model, settings.anthropic_api_key)
     messages = [{"role": "user", "content": question}]
-    with psycopg.connect(settings.db_url) as conn:
-        graph = build_graph(conn, embedder, agent_model)
+    with ConnectionPool(settings.db_url) as pool:
+        graph = build_graph(pool, embedder, agent_model)
         result = graph.invoke({"messages": messages, "iterations": 0})
     for m in result["messages"]:
         typer.echo(m)

@@ -12,14 +12,14 @@ class Toolbox:
     """Holds the connection and embedder so tool functions take only
     arguments the model should supply."""
 
-    def __init__(self, conn, embedder: Embedder):
-        self._conn = conn
+    def __init__(self, pool, embedder: Embedder):
+        self._pool = pool
         self._embedder = embedder
 
     # ------------------------------------------------------------------ #
 
     def _resolve_cik(self, ticker: str) -> str | None:
-        with self._conn.cursor() as cur:
+        with self._pool.connection() as conn, conn.cursor() as cur:
             cur.execute(
                 "select cik from company_tickers where ticker = %s",
                 (ticker.upper(),),
@@ -55,7 +55,7 @@ class Toolbox:
                 return f"Invalid date {since!r}; expected YYYY-MM-DD."
 
         rows = search(
-            self._conn,
+            self._pool,
             self._embedder,
             query,
             ticker=ticker,
@@ -107,7 +107,7 @@ class Toolbox:
 
         quarters = max(1, min(quarters, 12))
 
-        with self._conn.cursor() as cur:
+        with self._pool.connection() as conn, conn.cursor() as cur:
             cur.execute(
                 """
                     select source_accn, period_end, revenue, net_income,
@@ -135,7 +135,7 @@ class Toolbox:
             cols = [d.name for d in cur.description]
 
         if not rows:
-            with self._conn.cursor() as cur:
+            with self._pool.connection() as conn, conn.cursor() as cur:
                 cur.execute(
                     """
                         select min(period_end), max(period_end)
@@ -201,7 +201,7 @@ class Toolbox:
         if cik is None:
             return f"No company found for ticker {ticker!r}."
 
-        with self._conn.cursor() as cur:
+        with self._pool.connection() as conn, conn.cursor() as cur:
             cur.execute(
                 """
                     select label, change_type, from_accession, to_accession,
