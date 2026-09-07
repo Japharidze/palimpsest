@@ -4,7 +4,9 @@ An SEC filings research assistant. It tracks a watchlist of companies, reports w
 
 A palimpsest is a manuscript that was scraped clean and written over, with the earlier text still showing through — which is what a quarterly filing is. This quarter's risk factors are last quarter's, reworded. Palimpsest reads what changed.
 
-Numbers come from XBRL and deterministic code. A language model is used only to read prose, and only for companies that rules have already flagged. Research tool, not investment advice.
+Numbers come from XBRL and deterministic code. A language model is used only to
+read prose, and every claim it makes carries a citation that is checked against
+the filing before the answer is returned. Research tool, not investment advice.
 
 ## Requirements
 
@@ -19,13 +21,6 @@ Numbers come from XBRL and deterministic code. A language model is used only to 
 
 ```bash
 git clone https://github.com/<user>/palimpsest.git
-uv run palim migrate             # apply pending schema migrations
-uv run palim refresh-companies   # load the ticker to CIK mapping from EDGAR
-uv run palim watch NVDA MSFT     # add companies to the watchlist
-uv run palim sync-filings        # index each watched company's filings
-uv run palim sync-facts          # load XBRL facts
-make dbt                         # build the metric models
-make dbt-test                    # run data quality tests
 cd palimpsest
 cp .env.example .env      # then edit SEC_USER_AGENT
 uv sync
@@ -51,6 +46,8 @@ uv run palim summarize-changes   # describe each change with a language model
 uv run palim vectorize-sections  # chunk and embed sections for retrieval
 make dbt                         # build the metric models
 make dbt-test                    # run data quality tests
+make eval                        # run the golden question set
+uv run python evals/runner.py --shape absence --repeats 3
 ```
 
 ## How it works
@@ -58,6 +55,17 @@ make dbt-test                    # run data quality tests
 Raw API responses are written to storage before anything parses them, so a parser change can be replayed without refetching. Postgres holds the parsed result. Schema changes are numbered SQL files applied in order and recorded in a `schema_migrations` table. dbt turns raw XBRL facts into per-quarter and per-year metrics with ratios, growth rates, and red-flag columns.
 
 Read [docs/architecture.md](docs/architecture.md) for the layer-by-layer design, and [docs/decisions.md](docs/decisions.md) for the tradeoffs behind it.
+
+## Evaluation
+
+The agent is measured against a golden set of questions in `evals/golden.yaml`,
+each asserting what the answer must contain, which tools must be called, and
+whether every citation resolves to a real filing and section. Run `make eval`.
+
+Results are saved per run under `evals/results/`. Model choice matters: on the
+same set, a hosted small model passed 12 of 17 where a larger one passed 9, and
+local models below roughly 8B parameters could not compose multiple tools at
+all. The remaining failures are documented in the file.
 
 ## Limitations
 
@@ -73,6 +81,12 @@ Read [docs/architecture.md](docs/architecture.md) for the layer-by-layer design,
 - **Small local models.** Models below roughly 8B parameters do not reliably
   compose multiple tools or follow citation instructions. The agent is intended
   to run against a hosted model; local models are for development.
+- **Metric provenance.** A figure's source filing is taken from the XBRL facts,
+  which can name a filing older than the window ingested for that company. The
+  citation is then unresolvable even though the number is correct.
+- **Absence answers.** When the honest answer is that a filing does not contain
+  something, there is nothing to cite, and the citation check reports that as a
+  problem.
 
 ## Data source
 

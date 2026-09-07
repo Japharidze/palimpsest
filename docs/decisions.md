@@ -1,5 +1,21 @@
 # Decisions
 
+<!--toc:start-->
+- [Decisions](#decisions)
+  - [1. One row per company, keyed by CIK](#1-one-row-per-company-keyed-by-cik)
+  - [2. Ingestion tracks progress with per-stage timestamps](#2-ingestion-tracks-progress-with-per-stage-timestamps)
+  - [3. Every reported version of a figure is kept](#3-every-reported-version-of-a-figure-is-kept)
+  - [4. Tag-to-metric mapping is hand-maintained](#4-tag-to-metric-mapping-is-hand-maintained)
+  - [5. Fourth-quarter flows are derived and marked](#5-fourth-quarter-flows-are-derived-and-marked)
+  - [6. Annual-only filers get their own table](#6-annual-only-filers-get-their-own-table)
+  - [7. Filing sections come from a library, not a parser we wrote](#7-filing-sections-come-from-a-library-not-a-parser-we-wrote)
+  - [8. Changes are found by code and explained by a model](#8-changes-are-found-by-code-and-explained-by-a-model)
+  - [9. Summaries are addressed by content, not by row](#9-summaries-are-addressed-by-content-not-by-row)
+  - [10. Retrieval returns passages, and one passage per repeat](#10-retrieval-returns-passages-and-one-passage-per-repeat)
+  - [11. A custom model abstraction was built, then replaced](#11-a-custom-model-abstraction-was-built-then-replaced)
+  - [12. Triage was designed and then dropped](#12-triage-was-designed-and-then-dropped)
+<!--toc:end-->
+
 A running log of design decisions, why they were made, and what they cost.
 
 ---
@@ -62,7 +78,7 @@ A running log of design decisions, why they were made, and what they cost.
 
 **Cost.** Two tables to keep in step, and anything wanting both has to query both.
 
-### 7. Filing sections come from a library, not a parser we wrote
+## 7. Filing sections come from a library, not a parser we wrote
 
 **Decision.** Section extraction uses `edgartools`, which detects sections from
 a filing's table of contents and reports a confidence score for each. An earlier
@@ -83,7 +99,7 @@ those filings are excluded from language diffing.
 
 ---
 
-### 8. Changes are found by code and explained by a model
+## 8. Changes are found by code and explained by a model
 
 **Decision.** Paragraphs are hashed to skip unchanged text, then remaining ones
 are matched by fuzzy similarity to separate rewordings from genuine additions
@@ -103,7 +119,7 @@ from diffing; that also means numeric commentary inside them is not covered.
 
 ---
 
-### 9. Summaries are addressed by content, not by row
+## 9. Summaries are addressed by content, not by row
 
 **Decision.** Each summary is keyed on a hash of the paragraph text it
 describes, in a table separate from the changes themselves.
@@ -119,7 +135,7 @@ rows nothing references.
 
 ---
 
-### 10. Retrieval returns passages, and one passage per repeat
+## 10. Retrieval returns passages, and one passage per repeat
 
 **Decision.** Filing sections are split into overlapping chunks with character
 offsets, embedded, and stored in the same database as everything else. Search
@@ -138,7 +154,7 @@ model invalidates every stored vector.
 
 ---
 
-### 11. A custom model abstraction was built, then replaced
+## 11. A custom model abstraction was built, then replaced
 
 **Decision.** Model access initially went through a small in-house interface so
 providers could be swapped. Once the agent needed a second provider, that
@@ -153,3 +169,21 @@ every boundary between them.
 **Cost.** A dependency on a fast-moving library whose API has changed
 repeatedly. Domain code — ingestion, storage, transformation, diffing, chunking,
 search — deliberately stays outside it.
+
+---
+
+## 12. Triage was designed and then dropped
+
+**Decision.** The architecture called for rules to rank companies by severity
+and gate which of them reached the model. That layer was not built. The
+red-flag columns exist and are returned by the metrics tool; nothing ranks or
+gates on them.
+
+**Why.** Triage earns its place when a scheduled job would otherwise read every
+company with a model. Here the watchlist is small and every query is started by
+a user asking about one company, so there was nothing to gate. The property the
+design was protecting — that deterministic findings reach the model — is already
+satisfied by returning the flags as columns.
+
+**Cost.** The cost discipline it would provide has to be rebuilt if the
+watchlist grows or briefs become scheduled.
