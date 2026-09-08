@@ -3,7 +3,7 @@ from datetime import date
 
 from fastapi import APIRouter, Request
 
-from palimpsest.api.schemas import AskRequest, AskResponse, Company, WatchlistResponse
+from palimpsest.api.schemas import AskRequest, AskResponse, Company, QuarterlyRowsResponse, WatchlistResponse
 from palimpsest.db import fetch_quarterly_rows, fetch_watchlist, resolve_cik
 
 router = APIRouter()
@@ -59,4 +59,4 @@ def quarterly_rows(
         rows = fetch_quarterly_rows(
             pool=request.app.state.pool, cik=cik, since=since, until=until
         )
-    return rows
+    return QuarterlyRowsResponse(rows=rows)

@@ -105,14 +105,14 @@ class Toolbox:
         rows = fetch_company_metrics(
             self._pool, cik, bounds["since"], bounds["until"], quarters
         )
-
-        earliest, latest = fetch_company_report_range(self._pool, cik)
-        if earliest is None:
-            return f"No quarterly metrics available for {ticker}."
-        return (
-            f"No quarters found for {ticker} in that range. "
-            f"Available quarters run from {earliest} to {latest}."
-        )
+        if not rows:
+            earliest, latest = fetch_company_report_range(self._pool, cik)
+            if earliest is None:
+                return f"No quarterly metrics available for {ticker}."
+            return (
+                f"No quarters found for {ticker} in that range. "
+                f"Available quarters run from {earliest} to {latest}."
+            )
 
         lines = []
         for d in rows:

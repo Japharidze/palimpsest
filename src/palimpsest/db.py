@@ -335,17 +335,14 @@ def fetch_watchlist(pool: ConnectionPool) -> list[dict]:
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute("""
             with lf as (
-            select
-                distinct
-                cik,
-                max(filing_date) over (partition by cik
-            order by
-                filing_date desc) latest_filing_date,
-                max(accession_number) over (partition by cik
-            order by
-                filing_date desc) latest_accn
-            from
-                filings)
+                select
+                    distinct on (cik) cik,
+                    filing_date as latest_filing_date,
+                    accession_number as latest_accn
+                from filings
+                order by
+                    cik, filing_date desc
+            )
             select
                 string_agg(distinct(ct.ticker), '; ') ticker,
                 c.name,
