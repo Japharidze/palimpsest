@@ -378,3 +378,21 @@ def fetch_watchlist(pool: ConnectionPool) -> list[dict]:
         rows = cur.fetchall()
 
     return rows
+
+
+def fetch_quarterly_rows(
+    pool: ConnectionPool, cik: str, since: date | None, until: date | None
+) -> list[dict]:
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            select *  from analytics.rpt_company_quarter rcq
+            where cik = %s and
+            (%s::date is null or rcq.period_end >= %s) and
+            (%s::date is null or rcq.period_end <= %s)
+            """,
+            (cik, since, since, until, until),
+        )
+        rows = cur.fetchall()
+
+    return rows

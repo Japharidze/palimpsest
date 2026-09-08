@@ -1,9 +1,10 @@
 import time
+from datetime import date
 
 from fastapi import APIRouter, Request
 
 from palimpsest.api.schemas import AskRequest, AskResponse, Company, WatchlistResponse
-from palimpsest.db import fetch_watchlist
+from palimpsest.db import fetch_quarterly_rows, fetch_watchlist, resolve_cik
 
 router = APIRouter()
 
@@ -44,3 +45,18 @@ def watchlist(request: Request):
         )
 
     return WatchlistResponse(companies=companies)
+
+
+@router.get("/companies/{ticker}/metrics")
+def quarterly_rows(
+    request: Request, ticker: str, since: date | None = None, until: date | None = None
+):
+
+    pool = request.app.state.pool
+    cik = resolve_cik(pool, ticker)
+    rows = []
+    if cik:
+        rows = fetch_quarterly_rows(
+            pool=request.app.state.pool, cik=cik, since=since, until=until
+        )
+    return rows

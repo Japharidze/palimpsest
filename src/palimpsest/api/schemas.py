@@ -28,3 +28,7 @@ class AskResponse(BaseModel):
 
 class WatchlistResponse(BaseModel):
     companies: list[Company]
+
+
+class QuarterlyRowsResponse(BaseModel):
+    rows: list[dict]
