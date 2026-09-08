@@ -129,9 +129,9 @@ def main() -> int:
         print("no matching cases")
         return 1
 
-    from palimpsest.cli import _build_llm
+    from palimpsest.llm import build_llm
 
-    model = _build_llm(
+    model = build_llm(
         settings.agent_provider, settings.agent_model, settings.anthropic_api_key
     )
 
