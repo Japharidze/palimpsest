@@ -32,3 +32,7 @@ class WatchlistResponse(BaseModel):
 
 class QuarterlyRowsResponse(BaseModel):
     rows: list[dict]
+
+
+class RecentChangesResponse(BaseModel):
+    rows: list[dict]

@@ -3,8 +3,20 @@ from datetime import date
 
 from fastapi import APIRouter, Request
 
-from palimpsest.api.schemas import AskRequest, AskResponse, Company, QuarterlyRowsResponse, WatchlistResponse
-from palimpsest.db import fetch_quarterly_rows, fetch_watchlist, resolve_cik
+from palimpsest.api.schemas import (
+    AskRequest,
+    AskResponse,
+    Company,
+    QuarterlyRowsResponse,
+    RecentChangesResponse,
+    WatchlistResponse,
+)
+from palimpsest.db import (
+    fetch_company_recent_changes,
+    fetch_quarterly_rows,
+    fetch_watchlist,
+    resolve_cik,
+)
 
 router = APIRouter()
 
@@ -60,3 +72,17 @@ def quarterly_rows(
             pool=request.app.state.pool, cik=cik, since=since, until=until
         )
     return QuarterlyRowsResponse(rows=rows)
+
+
+@router.get("/companies/{ticker}/changes")
+def recent_changes(
+    request: Request, ticker: str, section: str | None = None, limit: int = 20
+):
+    pool = request.app.state.pool
+    cik = resolve_cik(pool, ticker)
+    rows = []
+    if cik:
+        rows = fetch_company_recent_changes(
+            pool=pool, cik=cik, section=section, limit=limit
+        )
+    return RecentChangesResponse(rows=rows)
