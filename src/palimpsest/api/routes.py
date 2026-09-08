@@ -1,7 +1,7 @@
 import time
 from datetime import date
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from palimpsest.api.schemas import (
     AskRequest,
@@ -66,11 +66,11 @@ def quarterly_rows(
 
     pool = request.app.state.pool
     cik = resolve_cik(pool, ticker)
-    rows = []
-    if cik:
-        rows = fetch_quarterly_rows(
-            pool=request.app.state.pool, cik=cik, since=since, until=until
-        )
+    if cik is None:
+        raise HTTPException(404, f"Unknown ticker {ticker}")
+    rows = fetch_quarterly_rows(
+        pool=request.app.state.pool, cik=cik, since=since, until=until
+    )
     return QuarterlyRowsResponse(rows=rows)
 
 
@@ -80,9 +80,9 @@ def recent_changes(
 ):
     pool = request.app.state.pool
     cik = resolve_cik(pool, ticker)
-    rows = []
-    if cik:
-        rows = fetch_company_recent_changes(
-            pool=pool, cik=cik, section=section, limit=limit
-        )
+    if cik is None:
+        raise HTTPException(404, f"Unknown ticker {ticker}")
+    rows = fetch_company_recent_changes(
+        pool=pool, cik=cik, section=section, limit=limit
+    )
     return RecentChangesResponse(rows=rows)
