@@ -83,7 +83,9 @@ def build_graph(pool, embedder, model, iter_cap: int = 8):
 
     with pool.connection() as conn:
         conn.autocommit = True
-        checkpointer = PostgresSaver(conn)
-        checkpointer.setup()
+        PostgresSaver(conn).setup()
+        conn.autocommit = False
+
+    checkpointer = PostgresSaver(pool)
 
     return agent_builder.compile(checkpointer=checkpointer)
