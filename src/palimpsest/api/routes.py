@@ -4,7 +4,6 @@ from datetime import date
 
 from fastapi import APIRouter, HTTPException, Request
 
-from evals.runner import RESULTS
 from palimpsest.api.schemas import (
     AskRequest,
     AskResponse,
@@ -13,6 +12,7 @@ from palimpsest.api.schemas import (
     QuarterlyRowsResponse,
     RecentChange,
 )
+from palimpsest.config import EVAL_RESULTS
 from palimpsest.db import (
     fetch_company_recent_changes,
     fetch_filing_section,
@@ -148,7 +148,7 @@ def filing_section(
 
 @router.get("/evals")
 def evals():
-    evals_path = max(RESULTS.glob("*.json"), default=None)
+    evals_path = max(EVAL_RESULTS.glob("*.json"), default=None)
     if not evals_path:
         raise HTTPException(404, "Evaluation does not exist")
     with open(evals_path, "r", encoding="utf-8") as f:

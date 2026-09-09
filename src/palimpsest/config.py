@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 ROOT = Path(__file__).resolve().parents[2]  # src/palimpsest/config.py -> repo root
 MIGRATIONS_DIR = ROOT / "migrations"
 DATA_DIR = ROOT / "data"
+EVAL_RESULTS = ROOT / "evals" / "results"
 
 
 class Settings(BaseSettings):

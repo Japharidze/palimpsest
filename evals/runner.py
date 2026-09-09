@@ -15,11 +15,10 @@ import psycopg
 import yaml
 
 from palimpsest.agent.graph import build_graph
-from palimpsest.config import settings
+from palimpsest.config import EVAL_RESULTS, settings
 from palimpsest.embedding import OllamaEmbedder
 
 GOLDEN = Path(__file__).parent / "golden.yaml"
-RESULTS = Path(__file__).parent / "results"
 
 
 def calls(messages: list[dict]) -> list[dict]:
@@ -145,8 +144,8 @@ def main() -> int:
 
     report(results)
 
-    RESULTS.mkdir(exist_ok=True)
-    path = RESULTS / f"{time.strftime('%Y%m%d-%H%M%S')}.json"
+    EVAL_RESULTS.mkdir(exist_ok=True)
+    path = EVAL_RESULTS / f"{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.write_text(json.dumps(results, indent=2))
     print(f"saved to {path}")
 
