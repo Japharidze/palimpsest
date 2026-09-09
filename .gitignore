@@ -220,3 +220,7 @@ __marimo__/
 # Custom
 data/
 evals/results/
+
+# Web
+web/node_modules/
+web/dist/
