@@ -12,7 +12,6 @@ from palimpsest.api.schemas import (
     FilingSection,
     QuarterlyRowsResponse,
     RecentChange,
-    WatchlistResponse,
 )
 from palimpsest.db import (
     fetch_company_recent_changes,
@@ -44,7 +43,7 @@ def ask(request: Request, ask: AskRequest):
 
 
 @router.get("/companies")
-def watchlist(request: Request):
+def watchlist(request: Request) -> list[Company]:
     companies = []
     for row in fetch_watchlist(request.app.state.pool):
         companies.append(
@@ -60,7 +59,7 @@ def watchlist(request: Request):
             )
         )
 
-    return WatchlistResponse(companies=companies)
+    return companies
 
 
 @router.get("/companies/{ticker}/metrics")
@@ -91,17 +90,18 @@ def recent_changes(
     )
     changes = [
         RecentChange(
-            label=c['label'],
-            change_type=c['change_type'],
-            from_accession=c['from_accession'],
-            to_accession=c['to_accession'],
-            from_filing_date=c['from_filing_date'],
-            to_filing_date=c['to_filing_date'],
-            similarity=c['similarity'],
-            summary=c['summary'],
-            from_text=c['from_text'],
-            to_text=c['to_text'],
-        ) for c in rows
+            label=c["label"],
+            change_type=c["change_type"],
+            from_accession=c["from_accession"],
+            to_accession=c["to_accession"],
+            from_filing_date=c["from_filing_date"],
+            to_filing_date=c["to_filing_date"],
+            similarity=c["similarity"],
+            summary=c["summary"],
+            from_text=c["from_text"],
+            to_text=c["to_text"],
+        )
+        for c in rows
     ]
 
     return changes

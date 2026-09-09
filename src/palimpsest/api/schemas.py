@@ -42,10 +42,6 @@ class AskResponse(BaseModel):
     latency_ms: int
 
 
-class WatchlistResponse(BaseModel):
-    companies: list[Company]
-
-
 class QuarterlyRowsResponse(BaseModel):
     rows: list[dict]
 
