@@ -115,14 +115,15 @@ def filing_section(
     section_label: str | None = None,
 ) -> FilingSection:
 
+    if not section and not section_label:
+        raise HTTPException(404, "Either section or section label should be provided")
+
     filing_section = fetch_filing_section(
         pool=request.app.state.pool,
         accession_number=accession,
         section=section,
         section_label=section_label,
     )
-    if not section and not section_label:
-        raise HTTPException(404, "Either section or section label should be provided")
 
     provided = "section"
     if section_label:
