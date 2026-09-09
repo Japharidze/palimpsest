@@ -1,4 +1,7 @@
-def build_llm(provider: str, model: str, api_key: str | None = None):
+from langchain_core.language_models.chat_models import BaseChatModel
+
+
+def build_llm(provider: str, model: str, api_key: str | None = None) -> BaseChatModel:
     if provider == "ollama":
         from langchain_ollama import ChatOllama
         return ChatOllama(model=model)
