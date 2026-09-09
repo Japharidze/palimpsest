@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from psycopg_pool import ConnectionPool
 
 from palimpsest.agent.graph import build_graph
@@ -20,13 +21,22 @@ async def lifespan(app: FastAPI):
     app.state.pool = pool
     app.state.embedder = embedder
 
-    agent_model = build_llm(settings.agent_provider, settings.agent_model, settings.anthropic_api_key)
+    agent_model = build_llm(
+        settings.agent_provider, settings.agent_model, settings.anthropic_api_key
+    )
     app.state.agent = build_graph(pool, embedder, agent_model)
 
     yield
 
     pool.close()
 
+
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(router)
