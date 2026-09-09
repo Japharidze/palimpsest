@@ -10,9 +10,11 @@ import json
 import sys
 import time
 from pathlib import Path
+from uuid import uuid4
 
-import psycopg
 import yaml
+from langgraph.graph.state import RunnableConfig
+from psycopg_pool import ConnectionPool
 
 from palimpsest.agent.graph import build_graph
 from palimpsest.config import EVAL_RESULTS, settings
@@ -64,13 +66,15 @@ def score(case: dict, messages: list[dict], problems: list[str]) -> dict:
 
 
 def run_case(graph, case: dict) -> dict:
+    config: RunnableConfig = {"configurable": {"thread_id": str(uuid4())}}
     start = time.monotonic()
     try:
         state = graph.invoke(
             {
                 "messages": [{"role": "user", "content": case["question"]}],
                 "iterations": 0,
-            }
+            },
+            config=config,
         )
         result = score(case, state["messages"], state.get("citation_problems") or [])
     except Exception as e:  # noqa: BLE001 - one bad case must not lose the run
@@ -135,8 +139,8 @@ def main() -> int:
     )
 
     results = []
-    with psycopg.connect(settings.db_url) as conn:
-        graph = build_graph(conn, OllamaEmbedder(settings.embedding_model), model)
+    with ConnectionPool(settings.db_url) as pool:
+        graph = build_graph(pool, OllamaEmbedder(settings.embedding_model), model)
         for run in range(args.repeats):
             for case in cases:
                 print(f"  [{run + 1}/{args.repeats}] {case['id']} ...", flush=True)
