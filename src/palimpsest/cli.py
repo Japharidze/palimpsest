@@ -1,10 +1,12 @@
 from typing import Annotated
+from uuid import uuid4
 
 import psycopg
 import typer
-from psycopg_pool import ConnectionPool
 from httpx import HTTPStatusError
+from langgraph.graph.state import RunnableConfig
 from psycopg.rows import scalar_row
+from psycopg_pool import ConnectionPool
 from typer import progressbar
 
 from palimpsest.agent.graph import build_graph
@@ -296,11 +298,14 @@ def debug_graph_cmd(
     question: Annotated[str, typer.Argument(help="Question text for agent")],
 ) -> None:
     embedder = OllamaEmbedder(settings.embedding_model)
-    agent_model = build_llm(settings.agent_provider, settings.agent_model, settings.anthropic_api_key)
+    agent_model = build_llm(
+        settings.agent_provider, settings.agent_model, settings.anthropic_api_key
+    )
     messages = [{"role": "user", "content": question}]
+    config: RunnableConfig = {"configurable": {"thread_id": str(uuid4())}}
     with ConnectionPool(settings.db_url) as pool:
         graph = build_graph(pool, embedder, agent_model)
-        result = graph.invoke({"messages": messages, "iterations": 0})
+        result = graph.invoke({"messages": messages, "iterations": 0}, config=config)
     for m in result["messages"]:
         typer.echo(m)
 
