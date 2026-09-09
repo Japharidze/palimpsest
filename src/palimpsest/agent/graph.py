@@ -1,6 +1,7 @@
 import operator
 from typing import Annotated, Literal, TypedDict
 
+from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
@@ -80,4 +81,9 @@ def build_graph(pool, embedder, model, iter_cap: int = 8):
     )
     agent_builder.add_edge("tool_node", "agent_node")
 
-    return agent_builder.compile()
+    with pool.connection() as conn:
+        conn.autocommit = True
+        checkpointer = PostgresSaver(conn)
+        checkpointer.setup()
+
+    return agent_builder.compile(checkpointer=checkpointer)

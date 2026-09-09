@@ -1,8 +1,10 @@
 import json
 import time
 from datetime import date
+from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Request
+from langchain_core.runnables import RunnableConfig
 
 from palimpsest.api.schemas import (
     AskRequest,
@@ -27,9 +29,14 @@ router = APIRouter()
 @router.post("/ask")
 def ask(request: Request, ask: AskRequest):
     messages = [{"role": "user", "content": ask.question}]
+    config: RunnableConfig = {
+        "configurable": {"thread_id": ask.conversation_id or str(uuid4())}
+    }
 
     start = time.monotonic()
-    result = request.app.state.agent.invoke({"messages": messages, "iterations": 0})
+    result = request.app.state.agent.invoke(
+        {"messages": messages, "iterations": 0}, config=config
+    )
     latency_ms = int((time.monotonic() - start) * 1000)
 
     last_message = result["messages"][-1]
