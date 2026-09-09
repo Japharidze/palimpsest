@@ -402,6 +402,7 @@ def fetch_filing_section(pool, accession_number, section, section_label) -> dict
         select
             s.accession_number,
             s.section,
+            sl.label,
             s.content,
             s.start_offset,
             s.end_offset,
