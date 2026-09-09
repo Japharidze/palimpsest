@@ -59,7 +59,7 @@ def watchlist(request: Request) -> list[Company]:
             Company(
                 ticker=row["ticker"],
                 name=row["name"],
-                latest_filing_date=row["latest_filing_date"],
+                period_end=row["period_end"],
                 margin_compression=row["flag_margin_compression"],
                 inventory_buildup=row["flag_inventory_buildup"],
                 receivables_buildup=row["flag_receivables_buildup"],

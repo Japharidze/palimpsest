@@ -334,43 +334,30 @@ def fetch_company_recent_changes(
 def fetch_watchlist(pool: ConnectionPool) -> list[dict]:
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute("""
-            with lf as (
-                select
-                    distinct on (cik) cik,
-                    filing_date as latest_filing_date,
-                    accession_number as latest_accn
-                from filings
-                order by
-                    cik, filing_date desc
-            )
             select
-                string_agg(distinct(ct.ticker), '; ') ticker,
+                string_agg(distinct ct.ticker, '; ') as ticker,
                 c.name,
-                rpt.flag_inventory_buildup,
-                rpt.flag_receivables_buildup,
-                rpt.flag_roa_deterioration,
-                rpt.flag_short_runway,
-                rpt.flag_margin_compression,
-                lf.latest_filing_date
-            from
-                watchlist w
-            join companies c on
-                w.cik = c.cik
-            join company_tickers ct on
-                w.cik = ct.cik
-            join lf lf on 
-                w.cik = lf.cik
-            join analytics.rpt_company_quarter rpt on
-                lf.latest_accn = rpt.source_accn
-            group by
-                w.cik,
-                c.name,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8
+                q.period_end,
+                q.source_accn,
+                q.flag_margin_compression,
+                q.flag_inventory_buildup,
+                q.flag_receivables_buildup,
+                q.flag_roa_deterioration,
+                q.flag_short_runway
+            from watchlist w
+            join companies c using (cik)
+            join company_tickers ct using (cik)
+            join lateral (
+                select * from analytics.rpt_company_quarter r
+                where r.cik = w.cik
+                order by r.period_end desc
+                limit 1
+            ) q on true
+            group by c.name, q.period_end, q.source_accn,
+                    q.flag_margin_compression, q.flag_inventory_buildup,
+                    q.flag_receivables_buildup, q.flag_roa_deterioration,
+                    q.flag_short_runway
+            order by c.name
         """)
         rows = cur.fetchall()
 

@@ -10,7 +10,7 @@ AccessionNumber = Annotated[str, Field(pattern=r"^\d{10}-\d{2}-\d{6}$")]
 class Company(BaseModel):
     ticker: str
     name: str
-    latest_filing_date: date
+    period_end: date
     margin_compression: bool
     inventory_buildup: bool
     receivables_buildup: bool
