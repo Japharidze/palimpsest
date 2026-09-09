@@ -393,3 +393,29 @@ def fetch_quarterly_rows(
         rows = cur.fetchall()
 
     return rows
+
+
+def fetch_filing_section(pool, accession_number, section, section_label) -> dict | None:
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+        select
+            s.accession_number,
+            s.section,
+            s.content,
+            s.start_offset,
+            s.end_offset,
+            s.confidence
+        from filing_sections s
+        join filings f using (accession_number)
+        left join analytics.section_labels sl
+            on sl.form = replace(f.form, '/A', '')
+           and sl.section_key = s.section
+        where s.accession_number = %s
+          and (s.section = %s or sl.label = %s)
+        """,
+            (accession_number, section, section_label),
+        )
+        filing_section = cur.fetchone()
+
+        return filing_section

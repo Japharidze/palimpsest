@@ -1,6 +1,9 @@
 from datetime import date
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+AccessionNumber = Annotated[str, Field(pattern=r"^\d{10}-\d{2}-\d{6}$")]
 
 
 class Company(BaseModel):
@@ -36,3 +39,13 @@ class QuarterlyRowsResponse(BaseModel):
 
 class RecentChangesResponse(BaseModel):
     rows: list[dict]
+
+
+class FilingSection(BaseModel):
+    accession: AccessionNumber
+    section: str
+    section_label: str | None
+    content: str
+    start_offset: int
+    end_offset: int
+    confidence: float = Field(ge=0.0, le=1.0)

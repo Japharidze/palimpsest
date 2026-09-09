@@ -7,12 +7,14 @@ from palimpsest.api.schemas import (
     AskRequest,
     AskResponse,
     Company,
+    FilingSection,
     QuarterlyRowsResponse,
     RecentChangesResponse,
     WatchlistResponse,
 )
 from palimpsest.db import (
     fetch_company_recent_changes,
+    fetch_filing_section,
     fetch_quarterly_rows,
     fetch_watchlist,
     resolve_cik,
@@ -86,3 +88,42 @@ def recent_changes(
         pool=pool, cik=cik, section=section, limit=limit
     )
     return RecentChangesResponse(rows=rows)
+
+
+@router.get("/filings/{accession}")
+def filing_section(
+    request: Request,
+    accession: str,
+    section: str | None = None,
+    section_label: str | None = None,
+) -> FilingSection:
+
+    filing_section = fetch_filing_section(
+        pool=request.app.state.pool,
+        accession_number=accession,
+        section=section,
+        section_label=section_label,
+    )
+    if not section and not section_label:
+        raise HTTPException(404, "Either section or section label should be provided")
+
+    provided = "section"
+    if section_label:
+        provided = "section_label"
+        section = section_label
+
+    if not filing_section:
+        raise HTTPException(
+            404,
+            f"Unknown accession number - {accession} or wrong {provided} - {section}",
+        )
+
+    return FilingSection(
+        accession=filing_section["accession_number"],
+        section=filing_section['section'],
+        section_label=filing_section['label'],
+        content=filing_section["content"],
+        start_offset=filing_section["start_offset"],
+        end_offset=filing_section["end_offset"],
+        confidence=filing_section["confidence"],
+    )
