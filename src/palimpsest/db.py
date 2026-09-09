@@ -383,10 +383,29 @@ def fetch_quarterly_rows(
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """
-            select *  from analytics.rpt_company_quarter rcq
-            where cik = %s and
-            (%s::date is null or rcq.period_end >= %s) and
-            (%s::date is null or rcq.period_end <= %s)
+            select
+                period_end,
+                source_accn,
+                revenue,
+                net_income,
+                gross_margin_pct,
+                roa_pct,
+                roe_pct,
+                revenue_growth_yoy_pct,
+                inventory_growth_yoy_pct,
+                receivables_growth_yoy_pct,
+                runway_quarters,
+                revenue_is_derived,
+                flag_margin_compression,
+                flag_inventory_buildup,
+                flag_receivables_buildup,
+                flag_roa_deterioration,
+                flag_short_runway
+            from analytics.rpt_company_quarter
+            where cik = %s
+              and (%s::date is null or period_end >= %s)
+              and (%s::date is null or period_end <= %s)
+            order by period_end desc
             """,
             (cik, since, since, until, until),
         )

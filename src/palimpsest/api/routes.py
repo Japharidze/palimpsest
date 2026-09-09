@@ -9,7 +9,7 @@ from palimpsest.api.schemas import (
     AskResponse,
     Company,
     FilingSection,
-    QuarterlyRowsResponse,
+    QuarterlyRow,
     RecentChange,
 )
 from palimpsest.config import EVAL_RESULTS
@@ -65,7 +65,7 @@ def watchlist(request: Request) -> list[Company]:
 @router.get("/companies/{ticker}/metrics")
 def quarterly_rows(
     request: Request, ticker: str, since: date | None = None, until: date | None = None
-):
+) -> list[QuarterlyRow]:
 
     pool = request.app.state.pool
     cik = resolve_cik(pool, ticker)
@@ -74,7 +74,29 @@ def quarterly_rows(
     rows = fetch_quarterly_rows(
         pool=request.app.state.pool, cik=cik, since=since, until=until
     )
-    return QuarterlyRowsResponse(rows=rows)
+    quarterly_rows = [
+        QuarterlyRow(
+            period_end=r["period_end"],
+            source_accn=r["source_accn"],
+            revenue=r["revenue"],
+            net_income=r["net_income"],
+            gross_margin_pct=r["gross_margin_pct"],
+            roa_pct=r["roa_pct"],
+            roe_pct=r["roe_pct"],
+            revenue_growth_yoy_pct=r["revenue_growth_yoy_pct"],
+            inventory_growth_yoy_pct=r["inventory_growth_yoy_pct"],
+            receivables_growth_yoy_pct=r["receivables_growth_yoy_pct"],
+            runway_quarters=r["runway_quarters"],
+            revenue_is_derived=r["revenue_is_derived"],
+            flag_margin_compression=r["flag_margin_compression"],
+            flag_inventory_buildup=r["flag_inventory_buildup"],
+            flag_receivables_buildup=r["flag_receivables_buildup"],
+            flag_roa_deterioration=r["flag_roa_deterioration"],
+            flag_short_runway=r["flag_short_runway"],
+        )
+        for r in rows
+    ]
+    return quarterly_rows
 
 
 @router.get("/companies/{ticker}/changes")

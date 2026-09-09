@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from typing import Annotated
 
 from pydantic import BaseModel, Field
@@ -42,8 +43,24 @@ class AskResponse(BaseModel):
     latency_ms: int
 
 
-class QuarterlyRowsResponse(BaseModel):
-    rows: list[dict]
+class QuarterlyRow(BaseModel):
+    period_end: date
+    source_accn: AccessionNumber | None
+    revenue: Decimal | None
+    net_income: Decimal | None
+    gross_margin_pct: Decimal | None
+    roa_pct: Decimal | None
+    roe_pct: Decimal | None
+    revenue_growth_yoy_pct: Decimal | None
+    inventory_growth_yoy_pct: Decimal | None
+    receivables_growth_yoy_pct: Decimal | None
+    runway_quarters: Decimal | None
+    revenue_is_derived: bool | None
+    flag_margin_compression: bool
+    flag_inventory_buildup: bool
+    flag_receivables_buildup: bool
+    flag_roa_deterioration: bool
+    flag_short_runway: bool
 
 
 class FilingSection(BaseModel):
