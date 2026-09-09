@@ -11,7 +11,7 @@ from palimpsest.api.schemas import (
     Company,
     FilingSection,
     QuarterlyRowsResponse,
-    RecentChangesResponse,
+    RecentChange,
     WatchlistResponse,
 )
 from palimpsest.db import (
@@ -81,7 +81,7 @@ def quarterly_rows(
 @router.get("/companies/{ticker}/changes")
 def recent_changes(
     request: Request, ticker: str, section: str | None = None, limit: int = 20
-):
+) -> list[RecentChange]:
     pool = request.app.state.pool
     cik = resolve_cik(pool, ticker)
     if cik is None:
@@ -89,7 +89,22 @@ def recent_changes(
     rows = fetch_company_recent_changes(
         pool=pool, cik=cik, section=section, limit=limit
     )
-    return RecentChangesResponse(rows=rows)
+    changes = [
+        RecentChange(
+            label=c['label'],
+            change_type=c['change_type'],
+            from_accession=c['from_accession'],
+            to_accession=c['to_accession'],
+            from_filing_date=c['from_filing_date'],
+            to_filing_date=c['to_filing_date'],
+            similarity=c['similarity'],
+            summary=c['summary'],
+            from_text=c['from_text'],
+            to_text=c['to_text'],
+        ) for c in rows
+    ]
+
+    return changes
 
 
 @router.get("/filings/{accession}")

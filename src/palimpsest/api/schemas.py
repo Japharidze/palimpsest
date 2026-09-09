@@ -17,6 +17,19 @@ class Company(BaseModel):
     short_runway: bool
 
 
+class RecentChange(BaseModel):
+    label: str
+    change_type: str
+    from_accession: AccessionNumber
+    to_accession: AccessionNumber
+    from_filing_date: date
+    to_filing_date: date
+    similarity: float | None = Field(ge=0.0, le=1.0)
+    summary: str
+    from_text: str | None
+    to_text: str | None
+
+
 class AskRequest(BaseModel):
     question: str
     conversation_id: str | None = None
@@ -34,10 +47,6 @@ class WatchlistResponse(BaseModel):
 
 
 class QuarterlyRowsResponse(BaseModel):
-    rows: list[dict]
-
-
-class RecentChangesResponse(BaseModel):
     rows: list[dict]
 
 
