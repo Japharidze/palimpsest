@@ -41,6 +41,7 @@ class AskResponse(BaseModel):
     citation_problems: list[str]
     tool_calls: list[dict]
     latency_ms: int
+    conversation_id: str
 
 
 class QuarterlyRow(BaseModel):

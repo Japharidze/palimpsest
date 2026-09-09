@@ -29,8 +29,9 @@ router = APIRouter()
 @router.post("/ask")
 def ask(request: Request, ask: AskRequest):
     messages = [{"role": "user", "content": ask.question}]
+    conversation_id = ask.conversation_id or str(uuid4())
     config: RunnableConfig = {
-        "configurable": {"thread_id": ask.conversation_id or str(uuid4())}
+        "configurable": {"thread_id": conversation_id}
     }
 
     start = time.monotonic()
@@ -46,6 +47,7 @@ def ask(request: Request, ask: AskRequest):
         citation_problems=result.get("citation_problems"),
         tool_calls=[c for m in result["messages"] for c in (m.get("tool_calls") or [])],
         latency_ms=latency_ms,
+        conversation_id=conversation_id
     )
 
 
