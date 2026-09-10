@@ -45,7 +45,7 @@ def vectorize_sections(
 
 
 def search(
-    conn,
+    pool,
     embedder: Embedder,
     text: str,
     ticker: str | None = None,
@@ -97,7 +97,7 @@ def search(
         limit %(limit)s
     """
     vector = embedder.embed(text)
-    with conn.cursor(row_factory=dict_row) as cur:
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(query, {
                 "vec": vector,
                 "ticker": ticker,
