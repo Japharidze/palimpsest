@@ -39,7 +39,7 @@ function App() {
     <div className="layout">
       <Statusbar />
       <main>
-        <Transcript entries={entries}/>
+        <Transcript entries={entries} busy={busy}/>
         <Input onSubmit={handleAsk} disabled={busy} />
       </main>
       <aside>

@@ -1,7 +1,7 @@
 import type { Entry } from "../types";
 import { AnswerEntry, ErrorEntry, QuestionEntry, TraceEntry } from "./entries";
 
-export function Transcript({ entries }: { entries: Entry[] }) {
+export function Transcript({ entries, busy }: { entries: Entry[]; busy: boolean }) {
   return (
     <div>
       {entries.map((e, i) => {
@@ -13,6 +13,7 @@ export function Transcript({ entries }: { entries: Entry[] }) {
           default: return null;
         }
       })}
+      {busy && <div className="thinking">thinking…</div>}
     </div>
   );
 }
