@@ -1,3 +1,5 @@
+import fixture from "./fixtures/ask.json";
+
 export interface Company {
   ticker: string;
   name: string;
@@ -63,7 +65,15 @@ export async function getCompanies(): Promise<Company[]> {
   return r.json();
 }
 
+const MOCK = true; // TODO: false before deploy
+
 export async function ask(question: string, conversationId?: string): Promise<AskResponse> {
+
+  if (MOCK) {
+    await new Promise((r) => setTimeout(r, 1500));
+    return fixture as AskResponse
+  }
+
   const r = await fetch("/api/ask", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
