@@ -1,5 +1,9 @@
 import fixture from "./fixtures/ask.json";
 
+const MOCK = true;  // TODO: make false before deploy;
+
+// ---------------------------------------------------------------- types
+
 export interface Company {
   ticker: string;
   name: string;
@@ -39,6 +43,20 @@ export interface RecentChange {
   to_text: string | null;
 }
 
+export interface FeedChange {
+  ticker: string;
+  company_name: string;
+  cik: string;
+  label: string;
+  change_type: string;
+  to_filing_date: string;
+  to_accession: string;
+  from_accession: string;
+  similarity: number | null;
+  summary: string;
+  importance: number;
+}
+
 export interface QuarterlyRow {
   period_end: string;
   source_accn: string | null;
@@ -57,21 +75,94 @@ export interface QuarterlyRow {
   flag_receivables_buildup: boolean;
   flag_roa_deterioration: boolean;
   flag_short_runway: boolean;
-  }
+}
 
-export async function getCompanies(): Promise<Company[]> {
-  const r = await fetch("/api/companies");
-  if (!r.ok) throw new Error(`${r.status}`);
+export interface FilingSection {
+  accession: string;
+  section: string;
+  section_label: string | null;
+  content: string;
+  start_offset: number;
+  end_offset: number;
+  confidence: number;
+}
+
+export interface Fact {
+  tag: string;
+  unit: string;
+  start_date: string | null;
+  end_date: string;
+  duration: number | null;
+  value: number;
+  filed: string;
+  metric: string;
+}
+
+// ------------------------------------------------------------- internals
+
+async function get<T>(path: string): Promise<T> {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
   return r.json();
 }
 
-const MOCK = true; // TODO: false before deploy
+// ------------------------------------------------------------- endpoints
 
-export async function ask(question: string, conversationId?: string): Promise<AskResponse> {
+export async function getCompanies(): Promise<Company[]> {
+  return get<Company[]>("/api/companies");
+}
 
+export async function getMetrics(
+  ticker: string,
+  since?: string,
+  until?: string,
+): Promise<QuarterlyRow[]> {
+  const params = new URLSearchParams();
+  if (since) params.set("since", since);
+  if (until) params.set("until", until);
+  return get<QuarterlyRow[]>(`/api/companies/${ticker}/metrics?${params}`);
+}
+
+export async function getChanges(
+  ticker: string,
+  section?: string,
+  limit = 20,
+): Promise<RecentChange[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (section) params.set("section", section);
+  return get<RecentChange[]>(`/api/companies/${ticker}/changes?${params}`);
+}
+
+export async function getFeed(limit = 20): Promise<FeedChange[]> {
+  return get<FeedChange[]>(`/api/companies/changes?limit=${limit}`);
+}
+
+export async function getSection(
+  accession: string,
+  section?: string,
+  label?: string,
+): Promise<FilingSection> {
+  const params = new URLSearchParams();
+  if (section) params.set("section", section);
+  if (label) params.set("section_label", label);
+  return get<FilingSection>(`/api/filings/${accession}?${params}`);
+}
+
+export async function getFacts(accession: string): Promise<Fact[]> {
+  return get<Fact[]>(`/api/filings/${accession}/facts`);
+}
+
+export async function getEvals(): Promise<unknown> {
+  return get<unknown>("/api/evals");
+}
+
+export async function ask(
+  question: string,
+  conversationId?: string,
+): Promise<AskResponse> {
   if (MOCK) {
     await new Promise((r) => setTimeout(r, 1500));
-    return fixture as AskResponse
+    return fixture as AskResponse;
   }
 
   const r = await fetch("/api/ask", {
@@ -79,6 +170,6 @@ export async function ask(question: string, conversationId?: string): Promise<As
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, conversation_id: conversationId }),
   });
-  if (!r.ok) throw new Error(`${r.status}`);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
   return r.json();
 }
