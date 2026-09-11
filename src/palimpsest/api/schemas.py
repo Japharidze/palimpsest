@@ -34,10 +34,12 @@ class RecentChange(BaseModel):
 class FeedChange(BaseModel):
     ticker: str
     company_name: str
+    cik: str
     label: str
     change_type: str
-    to_accession: AccessionNumber
     to_filing_date: date
+    to_accession: AccessionNumber
+    from_accession: AccessionNumber
     similarity: float | None
     summary: str
     importance: float

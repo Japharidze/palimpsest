@@ -147,10 +147,12 @@ def feed_changes(request: Request, limit: int = 20) -> list[FeedChange]:
         FeedChange(
             ticker=c["ticker"],
             company_name=c["company_name"],
+            cik=c["cik"],
             label=c["label"],
             change_type=c["change_type"],
-            to_accession=c["to_accession"],
             to_filing_date=c["to_filing_date"],
+            to_accession=c["to_accession"],
+            from_accession=c["from_accession"],
             similarity=c["similarity"],
             summary=c["summary"],
             importance=c["importance"],
