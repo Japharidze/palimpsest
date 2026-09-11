@@ -1,13 +1,16 @@
 with
-    changes   as (select * from {{ source('raw', 'section_changes') }}),
-    summaries as (select * from {{ source('raw', 'change_summaries') }}),
-    companies as (select cik, name from {{ source('raw', 'companies') }}),
-    filings   as (select accession_number, filing_date, report_date
-                  from {{ source('raw', 'filings') }})
+    changes as (select * from {{ source("raw", "section_changes") }}),
+    summaries as (select * from {{ source("raw", "change_summaries") }}),
+    companies as (select cik, name from {{ source("raw", "companies") }}),
+    filings as (
+        select accession_number, filing_date, report_date
+        from {{ source("raw", "filings") }}
+    )
 
 select
     c.cik,
     co.name as company_name,
+    t.ticker,
     c.form,
     c.label,
 
@@ -29,4 +32,13 @@ join companies co on co.cik = c.cik
 join filings pf on pf.accession_number = c.from_accession
 join filings tf on tf.accession_number = c.to_accession
 left join summaries s on s.text_hash = c.text_hash
+join
+    lateral(
+        select ticker
+        from company_tickers
+        where cik = c.cik
+        order by length(ticker), ticker
+        limit 1
+    ) t
+    on true
 order by c.cik, tf.filing_date desc, c.label, c.position
