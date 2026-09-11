@@ -331,6 +331,38 @@ def fetch_company_recent_changes(
     return rows
 
 
+def fetch_feed_changes(pool: ConnectionPool, limit: int) -> list[dict]:
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            select ticker, company_name, cik, label, change_type,
+                to_filing_date, to_accession, from_accession, similarity, summary,
+                round((
+                    case
+                        when change_type in ('added', 'removed') then 1.0
+                        else 1.0 - coalesce(similarity, 1.0)
+                    end
+                    * case label
+                        when 'risk_factors' then 1.0
+                        when 'legal_proceedings' then 0.9
+                        when 'cybersecurity' then 0.8
+                        when 'mda' then 0.6
+                        when 'controls' then 0.4
+                        else 0.3
+                        end
+                )::numeric, 3) as importance
+            from analytics.rpt_section_changes
+            where summary is not null
+            order by importance desc, to_filing_date desc
+            limit %s
+                """,
+            (limit,),
+        )
+        rows = cur.fetchall()
+
+    return rows
+
+
 def fetch_watchlist(pool: ConnectionPool) -> list[dict]:
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute("""
@@ -427,9 +459,11 @@ def fetch_filing_section(pool, accession_number, section, section_label) -> dict
 
     return filing_section
 
+
 def fetch_facts(pool, accession_number) -> list[dict]:
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
-        cur.execute("""
+        cur.execute(
+            """
             select f.tag, f.unit, f.start_date, f.end_date, f.duration,
                 f.val, f.filed, m.metric
             from xbrl_facts f
@@ -438,7 +472,8 @@ def fetch_facts(pool, accession_number) -> list[dict]:
             and f.taxonomy = 'us-gaap'
             and m.metric is not null
             order by m.metric, f.end_date desc
-        """, (accession_number,)
+        """,
+            (accession_number,),
         )
         facts = cur.fetchall()
 

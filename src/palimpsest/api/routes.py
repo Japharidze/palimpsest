@@ -11,6 +11,7 @@ from palimpsest.api.schemas import (
     AskResponse,
     Company,
     Fact,
+    FeedChange,
     FilingSection,
     QuarterlyRow,
     RecentChange,
@@ -19,6 +20,7 @@ from palimpsest.config import EVAL_RESULTS
 from palimpsest.db import (
     fetch_company_recent_changes,
     fetch_facts,
+    fetch_feed_changes,
     fetch_filing_section,
     fetch_quarterly_rows,
     fetch_watchlist,
@@ -136,6 +138,27 @@ def recent_changes(
     ]
 
     return changes
+
+
+@router.get("/companies/changes")
+def feed_changes(request: Request, limit: int = 20) -> list[FeedChange]:
+    rows = fetch_feed_changes(request.app.state.pool, limit)
+    feed = [
+        FeedChange(
+            ticker=c["ticker"],
+            company_name=c["company_name"],
+            label=c["label"],
+            change_type=c["change_type"],
+            to_accession=c["to_accession"],
+            to_filing_date=c["to_filing_date"],
+            similarity=c["similarity"],
+            summary=c["summary"],
+            importance=c["importance"],
+        )
+        for c in rows
+    ]
+
+    return feed
 
 
 @router.get("/filings/{accession}")

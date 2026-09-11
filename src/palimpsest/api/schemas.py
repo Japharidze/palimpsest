@@ -31,6 +31,18 @@ class RecentChange(BaseModel):
     to_text: str | None
 
 
+class FeedChange(BaseModel):
+    ticker: str
+    company_name: str
+    label: str
+    change_type: str
+    to_accession: AccessionNumber
+    to_filing_date: date
+    similarity: float | None
+    summary: str
+    importance: float
+
+
 class AskRequest(BaseModel):
     question: str
     conversation_id: str | None = None
