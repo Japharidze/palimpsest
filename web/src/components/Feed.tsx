@@ -15,8 +15,8 @@ export function Feed({ onCite }: { onCite: (accession: string, section?: string)
 
   return (
     <ul>
-      {changes.map((c) => (
-        <li key={c.ticker} onClick={() => onCite(c.change_type === "removed" ? c.from_accession : c.to_accession, c.label)}>
+      {changes.map((c, i) => (
+        <li key={`${i}`} onClick={() => onCite(c.change_type === "removed" ? c.from_accession : c.to_accession, c.label)}>
           {c.ticker} - {c.label} {c.change_type} {c.to_filing_date} {c.summary}
         </li>
       ))}
