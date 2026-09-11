@@ -177,7 +177,7 @@ def upsert_sections(conn, rows) -> int:
                         start_offset,
                         end_offset,
                         confidence,
-detection_method) FROM STDIN
+                        detection_method) FROM STDIN
                       """) as copy:
             for r in rows:
                 copy.write_row(r)
