@@ -177,7 +177,7 @@ def upsert_sections(conn, rows) -> int:
                         start_offset,
                         end_offset,
                         confidence,
-                        detection_method) FROM STDIN
+detection_method) FROM STDIN
                       """) as copy:
             for r in rows:
                 copy.write_row(r)
@@ -426,3 +426,20 @@ def fetch_filing_section(pool, accession_number, section, section_label) -> dict
         filing_section = cur.fetchone()
 
         return filing_section
+
+def fetch_facts(pool, accession_number) -> list[dict]:
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("""
+            select f.tag, f.unit, f.start_date, f.end_date, f.duration,
+                f.val, f.filed, m.metric
+            from xbrl_facts f
+            left join analytics.metric_tags m using (tag)
+            where f.accn = %s
+            and f.taxonomy = 'us-gaap'
+            and m.metric is not null
+            order by m.metric, f.end_date desc
+        """, (accession_number,)
+        )
+        facts = cur.fetchall()
+
+    return facts

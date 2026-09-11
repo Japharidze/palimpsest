@@ -72,3 +72,14 @@ class FilingSection(BaseModel):
     start_offset: int
     end_offset: int
     confidence: float = Field(ge=0.0, le=1.0)
+
+
+class Fact(BaseModel):
+    tag: str
+    unit: str
+    start_date: date | None
+    end_date: date
+    duration: int | None
+    value: Decimal
+    filed: date
+    metric: str

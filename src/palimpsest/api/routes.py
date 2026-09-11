@@ -10,6 +10,7 @@ from palimpsest.api.schemas import (
     AskRequest,
     AskResponse,
     Company,
+    Fact,
     FilingSection,
     QuarterlyRow,
     RecentChange,
@@ -17,6 +18,7 @@ from palimpsest.api.schemas import (
 from palimpsest.config import EVAL_RESULTS
 from palimpsest.db import (
     fetch_company_recent_changes,
+    fetch_facts,
     fetch_filing_section,
     fetch_quarterly_rows,
     fetch_watchlist,
@@ -30,9 +32,7 @@ router = APIRouter()
 def ask(request: Request, ask: AskRequest):
     messages = [{"role": "user", "content": ask.question}]
     conversation_id = ask.conversation_id or str(uuid4())
-    config: RunnableConfig = {
-        "configurable": {"thread_id": conversation_id}
-    }
+    config: RunnableConfig = {"configurable": {"thread_id": conversation_id}}
 
     start = time.monotonic()
     result = request.app.state.agent.invoke(
@@ -47,7 +47,7 @@ def ask(request: Request, ask: AskRequest):
         citation_problems=result.get("citation_problems"),
         tool_calls=[c for m in result["messages"] for c in (m.get("tool_calls") or [])],
         latency_ms=latency_ms,
-        conversation_id=conversation_id
+        conversation_id=conversation_id,
     )
 
 
@@ -176,6 +176,27 @@ def filing_section(
         end_offset=filing_section["end_offset"],
         confidence=filing_section["confidence"],
     )
+
+
+@router.get("/filings/{accession}/facts")
+def fact(request: Request, accession: str) -> list[Fact]:
+    rows = fetch_facts(request.app.state.pool, accession)
+
+    facts = [
+        Fact(
+            tag=r["tag"],
+            unit=r["unit"],
+            start_date=r["start_date"],
+            end_date=r["end_date"],
+            duration=r["duration"],
+            value=r["val"],
+            filed=r["filed"],
+            metric=r["metric"],
+        )
+        for r in rows
+    ]
+
+    return facts
 
 
 @router.get("/evals")
