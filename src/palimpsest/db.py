@@ -425,7 +425,7 @@ def fetch_filing_section(pool, accession_number, section, section_label) -> dict
         )
         filing_section = cur.fetchone()
 
-        return filing_section
+    return filing_section
 
 def fetch_facts(pool, accession_number) -> list[dict]:
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
