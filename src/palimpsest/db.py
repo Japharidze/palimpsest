@@ -484,3 +484,22 @@ def fetch_facts(pool, accession_number) -> list[dict]:
         facts = cur.fetchall()
 
     return facts
+
+
+def fetch_corpus_stats(pool: ConnectionPool) -> dict:
+    """Counts describing what is currently ingested."""
+    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("""
+            select
+                (select count(*) from watchlist)                    as companies,
+                (select count(*) from filings f
+                   join watchlist w using (cik))                    as filings,
+                (select count(*) from filing_sections)              as sections,
+                (select count(*) from xbrl_facts)                   as facts,
+                (select count(*) from section_changes)              as changes,
+                (select count(*) from change_summaries)             as summaries,
+                (select count(*) from section_chunks)               as chunks,
+                (select max(filing_date) from filings f
+                   join watchlist w using (cik))                    as latest_filing
+        """)
+        return cur.fetchone() or {}

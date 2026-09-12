@@ -10,15 +10,18 @@ from palimpsest.api.schemas import (
     AskRequest,
     AskResponse,
     Company,
+    CorpusStats,
     Fact,
     FeedChange,
     FilingSection,
+    Meta,
     QuarterlyRow,
     RecentChange,
 )
-from palimpsest.config import EVAL_RESULTS
+from palimpsest.config import EVAL_RESULTS, settings
 from palimpsest.db import (
     fetch_company_recent_changes,
+    fetch_corpus_stats,
     fetch_facts,
     fetch_feed_changes,
     fetch_filing_section,
@@ -233,3 +236,15 @@ def evals():
         data = json.load(f)
 
     return data
+
+
+@router.get("/meta")
+def meta(request: Request) -> Meta:
+    stats = fetch_corpus_stats(request.app.state.pool)
+    return Meta(
+        agent_model=settings.agent_model,
+        agent_provider=settings.agent_provider,
+        summarizer_model=settings.summarizer_model,
+        embedding_model=settings.embedding_model,
+        corpus=CorpusStats(**stats),
+    )

@@ -97,3 +97,22 @@ class Fact(BaseModel):
     value: Decimal
     filed: date
     metric: str
+
+
+class CorpusStats(BaseModel):
+    companies: int
+    filings: int
+    sections: int
+    facts: int
+    changes: int
+    summaries: int
+    chunks: int
+    latest_filing: date | None
+
+
+class Meta(BaseModel):
+    agent_model: str
+    agent_provider: str
+    summarizer_model: str
+    embedding_model: str
+    corpus: CorpusStats
