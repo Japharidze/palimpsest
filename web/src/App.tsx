@@ -7,12 +7,14 @@ import { Transcript } from "./components/Transcript.tsx";
 import { Input } from "./components/Input.tsx";
 import { PassageOverlay } from "./components/PassageOverlay.tsx";
 import { Feed } from "./components/Feed.tsx";
+import { AboutOverlay } from "./components/AboutOverlay.tsx";
 
 function App() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [conversationId, setConversationId] = useState<string>();
   const [busy, setBusy] = useState<boolean>(false);
   const [citation, setCitation] = useState<{ accession: string; section?: string } | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   async function handleAsk(question: string) {
     setEntries((prev) => [...prev, { kind: "question", text: question }]);
@@ -49,7 +51,7 @@ function App() {
 
   return (
     <div className="layout">
-      <Statusbar />
+      <Statusbar onAbout={() => setAboutOpen(true)} />
       <main>
         <Transcript entries={entries} onCite={(accession, section) => setCitation({ accession, section })} busy={busy} />
         <Input onSubmit={handleAsk} disabled={busy} />
@@ -65,6 +67,7 @@ function App() {
           onClose={() => setCitation(null)}
         />
       )}
+      {aboutOpen && <AboutOverlay onClose={() => setAboutOpen(false)} />}
       <footer> Made by Japharidze </footer>
     </div>
   );

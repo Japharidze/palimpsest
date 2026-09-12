@@ -98,6 +98,32 @@ export interface Fact {
   metric: string;
 }
 
+export interface CorpusStats {
+  companies: number;
+  filings: number;
+  sections: number;
+  facts: number;
+  changes: number;
+  summaries: number;
+  chunks: number;
+  latest_filing: string | null;
+}
+
+export interface Meta {
+  agent_model: string;
+  agent_provider: string;
+  summarizer_model: string;
+  embedding_model: string;
+  corpus: CorpusStats;
+}
+
+export interface EvalResult {
+  id: string;
+  shape: string;
+  passed: boolean;
+  failures: string[];
+}
+
 // ------------------------------------------------------------- internals
 
 async function get<T>(path: string): Promise<T> {
@@ -107,6 +133,10 @@ async function get<T>(path: string): Promise<T> {
 }
 
 // ------------------------------------------------------------- endpoints
+
+export async function getMeta(): Promise<Meta> {
+  return get<Meta>("/api/meta");
+}
 
 export async function getCompanies(): Promise<Company[]> {
   return get<Company[]>("/api/companies");
@@ -152,8 +182,8 @@ export async function getFacts(accession: string): Promise<Fact[]> {
   return get<Fact[]>(`/api/filings/${accession}/facts`);
 }
 
-export async function getEvals(): Promise<unknown> {
-  return get<unknown>("/api/evals");
+export async function getEvals(): Promise<EvalResult[]> {
+  return get<EvalResult[]>("/api/evals");
 }
 
 export async function ask(
