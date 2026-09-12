@@ -56,6 +56,7 @@ function App() {
           onClose={() => setCitation(null)}
         />
       )}
+    <footer> Made by Japharidze </footer>
     </div>
   );
 }

@@ -1,3 +1,3 @@
 export function Statusbar() {
-  return <div></div>
+  return <header>palimpsest</header>
 }

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { Entry } from "../types";
 import { AnswerEntry, ErrorEntry, QuestionEntry, TraceEntry } from "./entries";
 
@@ -6,8 +7,14 @@ export function Transcript({ entries, onCite, busy }: {
   onCite: (accession: string, section?: string) => void;
   busy: boolean
 }) {
+  const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [entries]);
+
   return (
-    <div>
+    <div className="transcript">
       {entries.map((e, i) => {
         switch (e.kind) {
           case "question": return <QuestionEntry key={i} text={e.text} />;
@@ -18,6 +25,7 @@ export function Transcript({ entries, onCite, busy }: {
         }
       })}
       {busy && <div className="thinking">thinking…</div>}
+      <div ref={endRef} />
     </div>
   );
 }
