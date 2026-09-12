@@ -367,7 +367,7 @@ def fetch_watchlist(pool: ConnectionPool) -> list[dict]:
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute("""
             select
-                string_agg(distinct ct.ticker, '; ') as ticker,
+                t.ticker,
                 c.name,
                 q.period_end,
                 q.source_accn,
@@ -385,7 +385,13 @@ def fetch_watchlist(pool: ConnectionPool) -> list[dict]:
                 order by r.period_end desc
                 limit 1
             ) q on true
-            group by c.name, q.period_end, q.source_accn,
+            join lateral (
+                select ticker from company_tickers
+                where cik = w.cik
+                order by length(ticker), ticker
+                limit 1
+            ) t on true
+            group by t.ticker, c.name, q.period_end, q.source_accn,
                     q.flag_margin_compression, q.flag_inventory_buildup,
                     q.flag_receivables_buildup, q.flag_roa_deterioration,
                     q.flag_short_runway
