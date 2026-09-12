@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCompanies, type Company } from "../api";
 
-export function Watchlist() {
+export function Watchlist({ onSelect }: { onSelect: (ticker: string, name: string) => void; }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +16,7 @@ export function Watchlist() {
   return (
     <ul>
       {companies.map((c) => (
-        <li key={c.ticker}>
+        <li key={c.ticker} onClick={() => onSelect(c.ticker, c.name)}>
           {c.ticker.split("; ")[0]} {c.name} {c.period_end}
         </li>
       ))}

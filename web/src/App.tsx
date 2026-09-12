@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type Entry } from "./types.ts"
-import { ask } from "./api";
+import { ask, getChanges, getMetrics, type QuarterlyRow } from "./api";
 import { Watchlist } from "./components/Watchlist";
 import { Statusbar } from "./components/Statusbar.tsx";
 import { Transcript } from "./components/Transcript.tsx";
@@ -38,15 +38,24 @@ function App() {
     }
   }
 
+  async function handleCompany(ticker: string, name: string) {
+    const [metrics, changes] = await Promise.all([
+      getMetrics(ticker),
+      getChanges(ticker, undefined, 5)
+    ]);
+
+    setEntries((prev) => [...prev, { kind: "company", ticker, name, metrics, changes }]);
+  }
+
   return (
     <div className="layout">
       <Statusbar />
       <main>
-        <Transcript entries={entries} onCite={(accession, section) => setCitation({ accession, section })}  busy={busy} />
+        <Transcript entries={entries} onCite={(accession, section) => setCitation({ accession, section })} busy={busy} />
         <Input onSubmit={handleAsk} disabled={busy} />
       </main>
       <aside>
-        <Watchlist />
+        <Watchlist onSelect={handleCompany} />
         <Feed onCite={(accession, section) => setCitation({ accession, section })} />
       </aside>
       {citation && (
@@ -56,7 +65,7 @@ function App() {
           onClose={() => setCitation(null)}
         />
       )}
-    <footer> Made by Japharidze </footer>
+      <footer> Made by Japharidze </footer>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Entry } from "../types";
-import { AnswerEntry, ErrorEntry, QuestionEntry, TraceEntry } from "./entries";
+import { AnswerEntry, CompanyEntry, ErrorEntry, QuestionEntry, TraceEntry } from "./entries";
 
 export function Transcript({ entries, onCite, busy }: {
   entries: Entry[];
@@ -21,6 +21,7 @@ export function Transcript({ entries, onCite, busy }: {
           case "trace": return <TraceEntry key={i} entry={e} />;
           case "answer": return <AnswerEntry key={i} entry={e} onCite={onCite} />;
           case "error": return <ErrorEntry key={i} text={e.text} />;
+          case "company": return <CompanyEntry key={i} entry={e} onCite={onCite} />;
           default: return null;
         }
       })}
