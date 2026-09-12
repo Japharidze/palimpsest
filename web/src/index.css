@@ -33,13 +33,11 @@ body {
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
     "header header"
-    "main   aside"
-    "footer footer";
+    "main   aside";
   height: 100vh;
   gap: 1px;
 }
 .layout > header { grid-area: header; }
-.layout > footer { grid-area: footer; }
 .layout > aside {
   grid-area: aside;
   overflow-y: auto;

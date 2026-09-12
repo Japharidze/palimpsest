@@ -68,7 +68,6 @@ function App() {
         />
       )}
       {aboutOpen && <AboutOverlay onClose={() => setAboutOpen(false)} />}
-      <footer> Made by Japharidze </footer>
     </div>
   );
 }
