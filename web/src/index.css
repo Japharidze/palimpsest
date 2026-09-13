@@ -275,6 +275,12 @@ ul {
   color: var(--dim);
 }
 
+.company .note {
+  color: var(--dim);
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+
 .chip {
   padding: 0 0.3rem;
   color: var(--dim);

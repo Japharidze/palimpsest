@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCompanies, type Company } from "../api";
-
-function tidy(name: string): string {
-  return name
-    .replace(/\s+(CORP|INC|CO|LTD|PLC|NV|SA|AG)\.?$/i, "")
-    .replace(/,$/, "")
-    .replace(/\s*&\s*$/, "");
-}
+import { tidy } from "../format";
 
 export function Watchlist({ onSelect }: { onSelect: (ticker: string, name: string) => void; }) {
   const [companies, setCompanies] = useState<Company[]>([]);

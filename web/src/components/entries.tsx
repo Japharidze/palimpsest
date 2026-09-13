@@ -1,16 +1,8 @@
 import ReactMarkdown from "react-markdown";
 import type { Entry } from "../types";
+import { daysSince, linkify, tidy } from "../format";
 
-const CITE = /\[(\d{10}-\d{2}-\d{6}(?:\s*,\s*\d{10}-\d{2}-\d{6})*)\s*(?:\|\s*([a-z0-9_]+)\s*)?\]/g;
-
-function linkify(text: string): string {
-  return text.replace(CITE, (_m, accns: string, section?: string) =>
-    accns
-      .split(/\s*,\s*/)
-      .map((a) => `[${a.slice(-6)}](cite:${a}${section ? "/" + section : ""})`)
-      .join(" ")
-  );
-}
+const STALE_DAYS = 200;
 
 export function QuestionEntry({ text }: { text: string }) {
   return <p>&gt; {text}</p>;
@@ -71,20 +63,28 @@ export function CompanyEntry({
   onCite: (accession: string, section?: string) => void;
 }) {
   const latest = entry.metrics[0];
-
+  const stale = !latest || daysSince(latest.period_end) > STALE_DAYS;
+ 
   const flags = latest
     ? Object.entries(latest)
-      .filter(([k, v]) => k.startsWith("flag_") && v === true)
-      .map(([k]) => k.replace("flag_", ""))
+        .filter(([k, v]) => k.startsWith("flag_") && v === true)
+        .map(([k]) => k.replace("flag_", "").replace(/_/g, " "))
     : [];
-
+ 
   return (
     <div className="company">
       <header>
-        {entry.ticker} · {entry.name}
+        {entry.ticker} · {tidy(entry.name)}
       </header>
-
-      {latest && (
+ 
+      {stale ? (
+        <p className="note">
+          No recent quarterly metrics. Foreign private issuers file an annual
+          report and no quarterly ones, so their figures appear in the yearly
+          tables instead.
+          {latest && ` Most recent period on file: ${latest.period_end}.`}
+        </p>
+      ) : (
         <>
           <div className="period">
             quarter ending {latest.period_end}
@@ -98,7 +98,7 @@ export function CompanyEntry({
               </button>
             )}
           </div>
-
+ 
           <table>
             <tbody>
               <tr>
@@ -111,7 +111,11 @@ export function CompanyEntry({
               </tr>
               <tr>
                 <td>gross margin</td>
-                <td>{latest.gross_margin_pct != null ? `${latest.gross_margin_pct}%` : "—"}</td>
+                <td>
+                  {latest.gross_margin_pct != null
+                    ? `${latest.gross_margin_pct}%`
+                    : "—"}
+                </td>
               </tr>
               <tr>
                 <td>roe</td>
@@ -127,17 +131,17 @@ export function CompanyEntry({
               </tr>
             </tbody>
           </table>
-
+ 
           {flags.length > 0 && <div className="flags">{flags.join(" · ")}</div>}
         </>
       )}
-
+ 
       {entry.changes.length > 0 && (
         <ul className="changes">
           {entry.changes.map((c, i) => (
             <li
-              className={c.change_type}
               key={i}
+              className={c.change_type}
               onClick={() =>
                 onCite(
                   c.change_type === "removed" ? c.from_accession : c.to_accession,
@@ -145,7 +149,9 @@ export function CompanyEntry({
                 )
               }
             >
-              {c.label} · {c.to_filing_date}
+              <div className="meta">
+                {c.label} · {c.to_filing_date}
+              </div>
               {c.summary && <div className="summary">{c.summary}</div>}
             </li>
           ))}
