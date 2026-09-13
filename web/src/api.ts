@@ -1,6 +1,6 @@
 import fixture from "./fixtures/ask.json";
 
-const BASE = import.meta.env.API_URL ?? "";
+const BASE = import.meta.env.VITE_API_URL ?? "";
 const MOCK = false;  // TODO: make false before deploy;
 
 // ---------------------------------------------------------------- types
