@@ -1,5 +1,4 @@
 from datetime import date
-from decimal import float
 from typing import Annotated
 
 from pydantic import BaseModel, Field
