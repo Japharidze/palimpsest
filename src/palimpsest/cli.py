@@ -220,7 +220,7 @@ def diff_sections_cmd() -> None:
 @app.command("summarize-changes")
 def summarize_changes_cmd() -> None:
     """Generate summary of each label change using the prefered LLM service"""
-    llm = build_llm(settings.summarizer_provider, settings.summarizer_model)
+    llm = build_llm(settings.summarizer_provider, settings.summarizer_model, settings.anthropic_api_key)
     with psycopg.connect(settings.db_url) as conn:
         with conn.cursor() as cur:
             cur.execute("""
