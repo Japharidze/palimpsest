@@ -18,6 +18,8 @@ A palimpsest is a manuscript that was scraped clean and written over, with the e
 
 Numbers come from XBRL and deterministic code. A language model is used only to read prose, and every claim it makes carries a citation that is checked against the filing before the answer is returned. Research tool, not investment advice.
 
+![Palimpsest](docs/screenshot.png)
+
 ## Requirements
 
 - Python 3.12+ and [uv](https://docs.astral.sh/uv/)
