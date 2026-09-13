@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 export function Overlay({ title, onClose, children }: {
-  title: string;
+  title: React.ReactNode;
   onClose: () => void;
   children: React.ReactNode;
 }) {
@@ -18,7 +18,7 @@ export function Overlay({ title, onClose, children }: {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="panel" onClick={(e) => e.stopPropagation()}>
-        <header>{title}<button type="button" onClick={onClose}>×</button></header>
+        <header>{title}<button type="button" className="chip" onClick={onClose}>×</button></header>
         {children}
       </div>
     </div>

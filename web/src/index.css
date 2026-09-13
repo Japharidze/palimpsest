@@ -250,9 +250,22 @@ ul {
   color: var(--fg);
 }
 
+.company {
+  position: relative;
+  margin: 1.5rem 0 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
 .company > header {
+  position: absolute;
+  top: -0.7em;
+  left: 0.75rem;
+  margin: 0;
+  padding: 0 0.4rem;
+  background: var(--bg);
   color: var(--accent);
-  margin-bottom: 0.25rem;
 }
 
 .company table {
@@ -273,11 +286,21 @@ ul {
   padding-left: 2rem;
 }
 
+.company .changes {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
 .company .changes li {
   margin: 0.5rem 0;
   padding-left: 0.5rem;
   border-left: 2px solid var(--border);
   cursor: pointer;
+}
+
+.company .changes li:hover {
+  background: var(--border);
 }
 
 .company .changes li.removed { border-left-color: var(--warn); }
@@ -295,16 +318,19 @@ ul {
 }
 
 .chip {
-  padding: 0 0.3rem;
-  color: var(--dim);
-  border: 1px solid var(--border);
-  font-size: 0.85em;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  font-size: 0.9em;
   cursor: pointer;
+  opacity: 0.7;
 }
 
 .chip:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 /* ----------------------------------------------------------- aside */
@@ -404,6 +430,9 @@ aside li:hover {
   background: rgba(0, 0, 0, 0.8);
 }
 
+.overlay table td, .overlay table th { padding: 0.15rem 0.75rem 0.15rem 0; }
+.overlay tbody tr:nth-child(even) { background: color-mix(in srgb, var(--border) 40%, transparent); }
+
 .overlay .panel {
   max-width: 60rem;
   max-height: 80vh;
@@ -418,4 +447,29 @@ aside li:hover {
 .overlay .panel pre {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.overlay mark {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  color: var(--fg);
+}
+
+.more {
+  padding: 0;
+  border: none;
+  color: var(--accent);
+  text-decoration: underline;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }

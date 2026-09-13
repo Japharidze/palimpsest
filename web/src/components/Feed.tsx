@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getFeed, type FeedChange } from "../api";
 
-export function Feed({ onCite }: { onCite: (accession: string, section?: string) => void; }) {
+export function Feed({ onCite }: { onCite: (accession: string, section?: string, quote?: string) => void; }) {
   const [changes, setChanges] = useState<FeedChange[]>([]);
   const [error, setError] = useState<string | null>(null);
 

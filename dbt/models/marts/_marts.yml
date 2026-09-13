@@ -35,6 +35,8 @@ models:
     columns:
       - name: source_accn
         description: The filing that reported this period's figures, for citation.
+      - name: form
+        description: The filing form.
       - name: gross_margin_pct
         description: Revenue less cost of revenue, over revenue, as a percentage.
       - name: roa_pct

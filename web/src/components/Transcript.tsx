@@ -4,7 +4,7 @@ import { AnswerEntry, CompanyEntry, ErrorEntry, QuestionEntry, TraceEntry } from
 
 export function Transcript({ entries, onCite, busy }: {
   entries: Entry[];
-  onCite: (accession: string, section?: string) => void;
+  onCite: (accession: string, section?: string, quote?: string) => void;
   busy: boolean
 }) {
   const endRef = useRef<HTMLDivElement>(null);

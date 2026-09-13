@@ -26,9 +26,12 @@ export function TraceEntry({ entry }: { entry: Extract<Entry, { kind: "trace" }>
   );
 }
 
-export function AnswerEntry({ entry, onCite }: {
+export function AnswerEntry({
+  entry,
+  onCite,
+}: {
   entry: Extract<Entry, { kind: "answer" }>;
-  onCite: (accession: string, section?: string) => void;
+  onCite: (accession: string, section?: string, quote?: string) => void;
 }) {
   return (
     <div className="answer">
@@ -37,9 +40,20 @@ export function AnswerEntry({ entry, onCite }: {
         components={{
           a: ({ href, children }) => {
             if (!href?.startsWith("cite:")) return <a href={href}>{children}</a>;
-            const [accession, section] = href.slice(5).split("/");
+
+            const [path, query] = href.slice(5).split("?");
+            const [accession, section] = path.split("/");
+            const quote = query?.startsWith("q=")
+              ? decodeURIComponent(query.slice(2))
+              : undefined;
+
             return (
-              <button type="button" className="chip" onClick={() => onCite(accession, section)}>
+              <button
+                type="button"
+                className="chip"
+                title={accession}
+                onClick={() => onCite(accession, section || undefined, quote)}
+              >
                 {children}
               </button>
             );
@@ -48,6 +62,7 @@ export function AnswerEntry({ entry, onCite }: {
       >
         {linkify(entry.text)}
       </ReactMarkdown>
+
       {entry.citationProblems.length > 0 && (
         <div className="warn">{entry.citationProblems.join("; ")}</div>
       )}
@@ -64,23 +79,23 @@ export function CompanyEntry({
   onCite,
 }: {
   entry: Extract<Entry, { kind: "company" }>;
-  onCite: (accession: string, section?: string) => void;
+  onCite: (accession: string, section?: string, quote?: string) => void;
 }) {
   const latest = entry.metrics[0];
   const stale = !latest || daysSince(latest.period_end) > STALE_DAYS;
- 
+
   const flags = latest
     ? Object.entries(latest)
-        .filter(([k, v]) => k.startsWith("flag_") && v === true)
-        .map(([k]) => k.replace("flag_", "").replace(/_/g, " "))
+      .filter(([k, v]) => k.startsWith("flag_") && v === true)
+      .map(([k]) => k.replace("flag_", "").replace(/_/g, " "))
     : [];
- 
+
   return (
     <div className="company">
       <header>
         {entry.ticker} · {tidy(entry.name)}
       </header>
- 
+
       {stale ? (
         <p className="note">
           No recent quarterly metrics. Foreign private issuers file an annual
@@ -98,11 +113,11 @@ export function CompanyEntry({
                 className="chip"
                 onClick={() => onCite(latest.source_accn!)}
               >
-                {latest.source_accn.slice(-6)}
+                {latest.form ?? "source"}
               </button>
             )}
           </div>
- 
+
           <table>
             <tbody>
               <tr>
@@ -135,11 +150,11 @@ export function CompanyEntry({
               </tr>
             </tbody>
           </table>
- 
+
           {flags.length > 0 && <div className="flags">{flags.join(" · ")}</div>}
         </>
       )}
- 
+
       {entry.changes.length > 0 && (
         <ul className="changes">
           {entry.changes.map((c, i) => (
@@ -150,6 +165,7 @@ export function CompanyEntry({
                 onCite(
                   c.change_type === "removed" ? c.from_accession : c.to_accession,
                   c.label,
+                  (c.change_type === "removed" ? c.from_text : c.to_text) ?? undefined,
                 )
               }
             >

@@ -13,8 +13,12 @@ function App() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [conversationId, setConversationId] = useState<string>();
   const [busy, setBusy] = useState<boolean>(false);
-  const [citation, setCitation] = useState<{ accession: string; section?: string } | null>(null);
+  const [citation, setCitation] = useState<{ accession: string; section?: string; quote?: string } | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
+
+  function handleCite(accession: string, section?: string, quote?: string) {
+    setCitation({ accession, section, quote })
+  }
 
   async function handleAsk(question: string) {
     setEntries((prev) => [...prev, { kind: "question", text: question }]);
@@ -54,17 +58,18 @@ function App() {
       <Statusbar onAbout={() => setAboutOpen(true)} />
       <main>
         <h2>conversation</h2>
-        <Transcript entries={entries} onCite={(accession, section) => setCitation({ accession, section })} busy={busy} />
+        <Transcript entries={entries} onCite={handleCite} busy={busy} />
         <Input onSubmit={handleAsk} disabled={busy} />
       </main>
       <aside>
         <Watchlist onSelect={handleCompany} />
-        <Feed onCite={(accession, section) => setCitation({ accession, section })} />
+        <Feed onCite={handleCite} />
       </aside>
       {citation && (
         <PassageOverlay
           accession={citation.accession}
           section={citation.section}
+          quote={citation.quote}
           onClose={() => setCitation(null)}
         />
       )}

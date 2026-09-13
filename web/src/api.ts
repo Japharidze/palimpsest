@@ -60,6 +60,7 @@ export interface FeedChange {
 export interface QuarterlyRow {
   period_end: string;
   source_accn: string | null;
+  form: string | null;
   revenue: number | null;
   net_income: number | null;
   gross_margin_pct: number | null;

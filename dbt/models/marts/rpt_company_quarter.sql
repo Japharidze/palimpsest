@@ -8,6 +8,7 @@ with
             c.name as company_name,
             q.period_end,
             q.source_accn,
+            f.form,
             q.revenue,
             q.cost_of_revenue,
             q.net_income,
@@ -32,6 +33,7 @@ with
             lag(q.receivables, 4) over w as receivables_yoy_prior
         from q
         join c on c.cik = q.cik
+        left join filings f on f.accession_number = q.source_accn
         window w as (partition by q.cik order by q.period_end)
     ),
 
@@ -84,6 +86,7 @@ select
     company_name,
     period_end,
     source_accn,
+    form,
 
     revenue,
     cost_of_revenue,

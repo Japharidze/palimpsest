@@ -283,7 +283,7 @@ def fetch_company_metrics(
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """
-                select source_accn, period_end, revenue, net_income,
+                select source_accn, form, period_end, revenue, net_income,
                     gross_margin_pct, roa_pct, roe_pct,
                     revenue_growth_yoy_pct, inventory_growth_yoy_pct,
                     receivables_growth_yoy_pct, runway_quarters,
@@ -411,6 +411,7 @@ def fetch_quarterly_rows(
             select
                 period_end,
                 source_accn,
+                form,
                 revenue,
                 net_income,
                 gross_margin_pct,

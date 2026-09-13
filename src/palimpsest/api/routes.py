@@ -92,6 +92,7 @@ def quarterly_rows(
         QuarterlyRow(
             period_end=r["period_end"],
             source_accn=r["source_accn"],
+            form=r["form"],
             revenue=r["revenue"],
             net_income=r["net_income"],
             gross_margin_pct=r["gross_margin_pct"],
