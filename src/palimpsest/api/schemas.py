@@ -1,5 +1,5 @@
 from datetime import date
-from decimal import Decimal
+from decimal import float
 from typing import Annotated
 
 from pydantic import BaseModel, Field
@@ -61,15 +61,16 @@ class AskResponse(BaseModel):
 class QuarterlyRow(BaseModel):
     period_end: date
     source_accn: AccessionNumber | None
+    form: str | None
     revenue: float | None
     net_income: float | None
-    gross_margin_pct: Decimal | None
-    roa_pct: Decimal | None
-    roe_pct: Decimal | None
-    revenue_growth_yoy_pct: Decimal | None
-    inventory_growth_yoy_pct: Decimal | None
-    receivables_growth_yoy_pct: Decimal | None
-    runway_quarters: Decimal | None
+    gross_margin_pct: float | None
+    roa_pct: float | None
+    roe_pct: float | None
+    revenue_growth_yoy_pct: float | None
+    inventory_growth_yoy_pct: float | None
+    receivables_growth_yoy_pct: float | None
+    runway_quarters: float | None
     revenue_is_derived: bool | None
     flag_margin_compression: bool
     flag_inventory_buildup: bool
@@ -94,7 +95,7 @@ class Fact(BaseModel):
     start_date: date | None
     end_date: date
     duration: int | None
-    value: Decimal
+    value: float
     filed: date
     metric: str
 
