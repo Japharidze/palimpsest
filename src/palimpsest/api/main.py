@@ -35,7 +35,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://palimpsest.up.railway.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
