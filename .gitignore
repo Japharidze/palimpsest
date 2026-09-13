@@ -219,7 +219,8 @@ __marimo__/
 
 # Custom
 data/
-evals/results/
+evals/results/*
+!evals/results/latest.json
 *:Zone.Identifier
 .env.railway
 

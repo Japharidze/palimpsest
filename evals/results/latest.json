@@ -1,0 +1,23 @@
+[
+  {
+    "id": "point_nvda_margin",
+    "shape": "point_lookup",
+    "passed": false,
+    "failures": [
+      "missing '75.0'",
+      "missing '0001045810-26-000075'",
+      "citations: no citations found"
+    ],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2026-07-26\", \"until\": \"2026-07-26\", \"quarters\": 1})",
+      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2026-07-01\", \"until\": \"2026-07-31\"})",
+      "get_company_metrics({\"ticker\": \"NVDA\"})"
+    ],
+    "citation_problems": [
+      "no citations found"
+    ],
+    "answer": "I apologize, but I'm experiencing a technical issue accessing the metrics data. The system is unable to retrieve NVIDIA's financial metrics at this time. Please try again in a moment.",
+    "latency_ms": 10767,
+    "run": 1
+  }
+]

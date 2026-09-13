@@ -151,9 +151,15 @@ def main() -> int:
 
     if not args.only and not args.shape:
         EVAL_RESULTS.mkdir(exist_ok=True)
+        payload = json.dumps(results, indent=2)
+
         path = EVAL_RESULTS / f"{time.strftime('%Y%m%d-%H%M%S')}.json"
-        path.write_text(json.dumps(results, indent=2))
-        print(f"saved to {path}")
+        path.write_text(payload)
+
+        latest = EVAL_RESULTS / "latest.json"
+        latest.write_text(payload)
+
+        print(f"saved to {path} and {latest}")
 
     return 0 if all(r["passed"] for r in results) else 1
 
