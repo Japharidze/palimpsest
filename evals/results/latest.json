@@ -2,22 +2,258 @@
   {
     "id": "point_nvda_margin",
     "shape": "point_lookup",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2026-07-26\", \"until\": \"2026-07-26\", \"quarters\": 1})"
+    ],
+    "citation_problems": [],
+    "answer": "NVIDIA's gross margin for the quarter ending July 26, 2026 was **75.0%** [0001045810-26-000075].",
+    "latency_ms": 4555,
+    "run": 1
+  },
+  {
+    "id": "point_googl_revenue",
+    "shape": "point_lookup",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"GOOGL\", \"since\": \"2026-06-30\", \"until\": \"2026-06-30\", \"quarters\": 1})"
+    ],
+    "citation_problems": [],
+    "answer": "For the quarter ending June 30, 2026, Alphabet reported revenue of $119.796 billion [0001652044-26-000071].",
+    "latency_ms": 4784,
+    "run": 1
+  },
+  {
+    "id": "point_rddt_net_income",
+    "shape": "point_lookup",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"RDDT\", \"since\": \"2026-06-30\", \"until\": \"2026-06-30\"})"
+    ],
+    "citation_problems": [],
+    "answer": "Reddit's net income for the quarter ending June 30, 2026 was $252,848,000 (approximately $252.9 million) [0001713445-26-000100].",
+    "latency_ms": 4431,
+    "run": 1
+  },
+  {
+    "id": "point_ko_revenue",
+    "shape": "point_lookup",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"KO\", \"since\": \"2026-04-03\", \"until\": \"2026-04-03\"})"
+    ],
+    "citation_problems": [],
+    "answer": "Coca-Cola reported revenue of $12,472,000,000 ($12.47 billion) for the quarter ending April 3, 2026 [0001628280-26-028802].",
+    "latency_ms": 4487,
+    "run": 1
+  },
+  {
+    "id": "compare_nvda_margin_dip",
+    "shape": "comparison",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2025-01-26\", \"until\": \"2025-04-27\", \"quarters\": 2})"
+    ],
+    "citation_problems": [],
+    "answer": "NVIDIA's gross margin decreased from 73.0% in the quarter ending 26 January 2025 to 60.5% in the quarter ending 27 April 2025, representing a decline of 12.5 percentage points [0001045810-25-000023, 0001045810-25-000116].",
+    "latency_ms": 4867,
+    "run": 1
+  },
+  {
+    "id": "compare_nvda_margin_recovery",
+    "shape": "comparison",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2025-04-27\", \"until\": \"2025-07-27\", \"quarters\": 2})"
+    ],
+    "citation_problems": [],
+    "answer": "Yes, NVIDIA's gross margin improved significantly between these two quarters. \n\nFor the quarter ending 27 April 2025, the gross margin was 60.5% [0001045810-25-000116].\n\nFor the quarter ending 27 July 2025, the gross margin increased to 72.4% [0001045810-25-000209].\n\nThis represents an improvement of 11.9 percentage points quarter-over-quarter.",
+    "latency_ms": 4776,
+    "run": 1
+  },
+  {
+    "id": "compare_msft_margin_2015",
+    "shape": "comparison",
     "passed": false,
     "failures": [
-      "missing '75.0'",
+      "citations: unknown filing 0001193125-15-350718; unknown filing 0001193125-16-441821"
+    ],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"MSFT\", \"since\": \"2015-09-01\", \"until\": \"2015-12-31\", \"quarters\": 2})"
+    ],
+    "citation_problems": [
+      "unknown filing 0001193125-15-350718",
+      "unknown filing 0001193125-16-441821"
+    ],
+    "answer": "Microsoft's gross margin decreased between these two quarters:\n\n- **Quarter ending 30 September 2015**: 64.6% [0001193125-15-350718]\n- **Quarter ending 31 December 2015**: 58.5% [0001193125-16-441821]\n\nThis represents a **decline of 6.1 percentage points** in gross margin. The quarter ending 31 December 2015 was flagged for margin compression [0001193125-16-441821].",
+    "latency_ms": 5608,
+    "run": 1
+  },
+  {
+    "id": "change_nvda_risk_removed",
+    "shape": "change_detection",
+    "passed": false,
+    "failures": [
       "missing '0001045810-26-000075'",
+      "citations: quote not found in cited filings: \"The availability of data centers, energy, and capital to sup\u2026\""
+    ],
+    "tool_calls": [
+      "get_recent_changes({\"ticker\": \"NVDA\", \"section\": \"risk_factors\", \"limit\": 50})"
+    ],
+    "citation_problems": [
+      "quote not found in cited filings: \"The availability of data centers, energy, and capital to sup\u2026\""
+    ],
+    "answer": "Based on the changes between NVIDIA's 10-Q filed on May 20, 2026 and the 10-Q filed on August 26, 2026, NVIDIA dropped the following risk factor disclosures:\n\n## Supply Chain and Demand Forecasting Risks\n\nNVIDIA removed extensive disclosures about:\n\n- **Supply chain costs and lead times**: Concerns about paying premiums, providing deposits, and entering long-term supply agreements that increased product costs, with lead times extending beyond 12 months [0001045810-26-000052 | risk_factors]\n\n- **Supply-demand mismatches**: Detailed warnings about the difficulty of estimating customer demand accurately, leading to product shortages, excess inventory, price reductions, and inventory write-downs [0001045810-26-000052 | risk_factors]\n\n- **Factors affecting demand volatility**: A comprehensive list of factors that could cause demand estimation errors, including:\n  - Changes in product development cycles\n  - Competing technologies and competitor actions\n  - Government lockdowns or public health issues\n  - Availability of data center capacity or energy for customers\n  - New product introductions and transitions\n  - Purchasing decisions by distributors and channel partners\n  - Developer ability to build applications on NVIDIA platforms\n  - Government actions like export controls and tariffs\n  - Customers' ability to secure capital and energy for data center infrastructure\n  - Availability of third-party content on platforms like GeForce NOW\n  [0001045810-26-000052 | risk_factors]\n\n## Competition Risks\n\nNVIDIA dropped disclosures stating that \"Competition could adversely impact our market share and financial results\" and detailed warnings about competitors with their own fabrication facilities, longer operating histories, larger customer bases, and greater resources that \"may be able to acquire market share and/or prevent us from doing so\" [0001045810-26-000052 | risk_factors]\n\n## Infrastructure and Resource Availability\n\nThe company removed warnings that \"The availability of data centers, energy, and capital to support the buildout of NVIDIA AI infrastructure by our customers and partners is crucial, and any shortage of these and other necessary resources could impact our future revenue and financial performance,\" including concerns about the multi-year process of expanding energy capacity and capital constraints for less-capitalized companies [0001045810-26-000052 | risk_factors]\n\n## Product Architecture and Transition Risks\n\nNVIDIA dropped disclosures about:\n\n- The complexity of introducing multiple architectures concurrently and shipping multiple architecture products simultaneously [0001045810-26-000052 | risk_factors]\n\n- The new annual cadence for Data Center solutions and how customers may delay purchases or be unable to adopt new products as fast as forecasted [0001045810-26-000052 | risk_factors]\n\n- How changes to the product roadmap may impact development resources and supply chain costs [0001045810-26-000052 | risk_factors]\n\n## Cryptocurrency Mining Volatility\n\nThe company removed a detailed discussion about how GPUs used for cryptocurrency mining (such as Ethereum) created \"inconsistent spikes and drops in demand\" and the difficulty of estimating \"with any reasonable degree of precision the past or current impact of cryptocurrency mining\" [0001045810-26-000052 | risk_factors]\n\n## Export Control Impacts\n\nNVIDIA dropped several specific warnings about export controls:\n\n- That export controls \"have already encouraged and may in the future encourage overseas governments to request that our customers purchase from our competitors rather than NVIDIA or other U.S. firms\" [0001045810-26-000052 | risk_factors]\n\n- Concerns about being unable to pass tariffs along to customers when selling licensed products into China and being \"subject to litigation, increased costs, and a harmed competitive position\" [0001045810-26-000052 | risk_factors]\n\n- A detailed discussion about China's antitrust investigation finding that NVIDIA's compliance with U.S. export controls \"discriminated unfairly\" by offering degraded products to the Chinese market [0001045810-26-000052 | risk_factors]\n\nThese removals suggest NVIDIA streamlined its risk factor disclosures, eliminating many operational and market-specific concerns that were present in the prior quarter's filing.",
+    "latency_ms": 27415,
+    "run": 1
+  },
+  {
+    "id": "change_nvda_competition",
+    "shape": "change_detection",
+    "passed": false,
+    "failures": [
+      "missing '0001045810-26-000075'"
+    ],
+    "tool_calls": [
+      "get_recent_changes({\"ticker\": \"NVDA\", \"limit\": 50})",
+      "search_chunks({\"ticker\": \"NVDA\", \"query\": \"competition competitors competitive landscape\", \"form\": \"10-Q\", \"since\": \"2026-01-01\"})",
+      "search_chunks({\"ticker\": \"NVDA\", \"query\": \"competition could adversely impact market share financial results target markets competitive\", \"form\": \"10-Q\", \"since\": \"2026-01-01\"})",
+      "search_chunks({\"ticker\": \"NVDA\", \"query\": \"competition adversely impact market share target markets competitive new entrants consolidations companies compete processors interconnects software\", \"form\": \"10-Q\", \"since\": \"2026-05-01\"})",
+      "search_chunks({\"ticker\": \"NVDA\", \"query\": \"competition could adversely impact our market share financial results target markets remain competitive intensify expanding changing product service offerings\", \"form\": \"10-Q\", \"since\": \"2026-08-01\"})",
+      "search_chunks({\"ticker\": \"NVDA\", \"query\": \"competition adversely impact market share target markets competitive processors interconnects software algorithms systems services unique value customers developing ASICs\", \"section\": \"risk_factors\", \"since\": \"2026-01-01\"})",
+      "search_chunks({\"ticker\": \"NVDA\", \"query\": \"competition could adversely impact market share financial results target markets remain competitive intensify new entrants consolidations companies compete with us processors interconnects\", \"section\": \"risk_factors\", \"form\": \"10-Q\", \"since\": \"2026-08-01\"})",
+      "search_chunks({\"ticker\": \"NVDA\", \"query\": \"Competition could adversely impact our market share and financial results Our target markets remain competitive and competition may intensify\", \"form\": \"10-Q\", \"since\": \"2026-08-20\"})"
+    ],
+    "citation_problems": [],
+    "answer": "Let me search for the actual \"Competition could adversely impact\" risk factor heading in the most recent filing:",
+    "latency_ms": 33302,
+    "run": 1
+  },
+  {
+    "id": "attribution_nvda_margin",
+    "shape": "attribution",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2025-04-01\", \"until\": \"2025-04-30\", \"quarters\": 2})",
+      "search_chunks({\"query\": \"gross margin decline decrease explanation quarter ending April 2025\", \"ticker\": \"NVDA\", \"since\": \"2025-04-01\"})"
+    ],
+    "citation_problems": [],
+    "answer": "Based on the data, NVIDIA's gross margin fell to 60.5% in the quarter ending April 27, 2025 [0001045810-25-000116], down from 73.0% in the prior quarter and 78.4% in the year-ago quarter [0001045810-25-000116].\n\nManagement explained the decline as follows:\n\n\"Gross margins decreased to 60.5% for the first quarter of fiscal year 2026 compared to 78.4% for the first quarter of fiscal year 2025, primarily due to a $4.5 billion charge associated with H20 excess inventory and purchase obligations and the initial ramp of more sophisticated systems within Data Center.\" [0001045810-25-000116 | part_i_item_2]\n\nManagement also stated: \"Gross margin decreased from a year ago and sequentially, primarily due to a $4.5 billion charge associated with H20 excess inventory and purchase obligations and the initial ramp of more sophisticated systems within Data Center.\" [0001045810-25-000116 | part_i_item_2]\n\nThe two primary factors were:\n1. A $4.5 billion charge related to H20 excess inventory and purchase obligations\n2. The initial ramp of more sophisticated systems within the Data Center segment",
+    "latency_ms": 11909,
+    "run": 1
+  },
+  {
+    "id": "attribution_googl_tac",
+    "shape": "attribution",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "search_chunks({\"query\": \"traffic acquisition costs Google Network properties\", \"ticker\": \"GOOGL\"})"
+    ],
+    "citation_problems": [],
+    "answer": "Based on Alphabet's SEC filings, the company explains that traffic acquisition costs (TAC) on Google Network properties are significantly higher as a percentage of revenues compared to other properties because \"most of the advertiser revenues from ads served on Google Network properties are paid as TAC to our Google Network partners\" [0001652044-26-000071 | part_i_item_2].\n\nMore specifically, Alphabet describes TAC as including \"amounts paid to Google Network partners primarily for ads displayed on their properties\" [0001652044-26-000071 | part_i_item_1].\n\nGoogle Network properties include \"revenues generated on Google Network properties participating in AdMob, AdSense, and Google Ad Manager\" [0001652044-26-000071 | part_i_item_2].\n\nThe company notes that it expects \"traffic acquisition costs (\"TAC\") paid to our distribution partners and Google Network partners to increase as our advertising revenues grow\" [0001652044-26-000018 | part_ii_item_7].\n\nIn essence, Alphabet explains that the high TAC rate on Google Network properties reflects the revenue-sharing model with third-party publishers and partners who display Google ads on their own websites and apps, with most of the advertising revenue being passed through to these partners.",
+    "latency_ms": 9055,
+    "run": 1
+  },
+  {
+    "id": "absence_nvda_going_concern",
+    "shape": "absence",
+    "passed": false,
+    "failures": [
+      "unwanted '0001045810-2'"
+    ],
+    "tool_calls": [
+      "search_chunks({\"query\": \"substantial doubt going concern ability to continue operations\", \"ticker\": \"NVDA\"})",
+      "search_chunks({\"query\": \"going concern basis of accounting financial statements preparation\", \"ticker\": \"NVDA\"})",
+      "get_company_metrics({\"ticker\": \"NVDA\", \"quarters\": 4})"
+    ],
+    "citation_problems": [],
+    "answer": "Based on my search of NVIDIA's SEC filings, **NVIDIA does not disclose any substantial doubt about its ability to continue as a going concern**.\n\nThe search results show no going concern warnings or qualifications in NVIDIA's financial statements or disclosures. The company's most recent financial metrics demonstrate strong financial health:\n\n- Revenue of $96.2 billion for the quarter ending July 26, 2026 [0001045810-26-000075]\n- Net income of $59.7 billion for the same period [0001045810-26-000075]\n- Gross margins of approximately 75% [0001045810-26-000075]\n- Strong year-over-year revenue growth of 105.9% [0001045810-26-000075]\n\nThe filings confirm that NVIDIA's financial statements are \"prepared in accordance with accounting principles generally accepted in the United States, or U.S. GAAP\" [0001045810-26-000021 | part_ii_item_7], with no mention of going concern issues. The auditor's opinion states that the consolidated financial statements \"present fairly, in all material respects, the financial position of the Company\" [0001045810-21-000010 | part_iv_item_15], with no going concern qualification noted.\n\nNVIDIA's robust profitability and financial position indicate no issues with its ability to continue operations.",
+    "latency_ms": 14706,
+    "run": 1
+  },
+  {
+    "id": "absence_msft_going_concern",
+    "shape": "absence",
+    "passed": false,
+    "failures": [
+      "citations: quote not found in cited filings: \"Based on this evaluation, management concluded that the Comp\u2026\""
+    ],
+    "tool_calls": [
+      "search_chunks({\"query\": \"material weakness internal control over financial reporting\", \"ticker\": \"MSFT\"})",
+      "search_chunks({\"query\": \"management assessment internal control effective material weakness\", \"ticker\": \"MSFT\", \"section\": \"controls\"})",
+      "search_chunks({\"query\": \"management report internal control over financial reporting effective\", \"ticker\": \"MSFT\", \"form\": \"10-K\"})"
+    ],
+    "citation_problems": [
+      "quote not found in cited filings: \"Based on this evaluation, management concluded that the Comp\u2026\""
+    ],
+    "answer": "Based on the search results, **no, Microsoft has not disclosed a material weakness in internal control over financial reporting**. \n\nIn its most recent 10-K filing, management stated: \"Based on this evaluation, management concluded that the Company's internal control over financial reporting was effective as of June 30, 2026\" [0001193125-26-323660 | part_ii_item_9a]. Additionally, the auditor \"expressed an unqualified opinion on the Company's internal control over financial reporting\" [0001193125-26-323660 | part_ii_item_8].\n\nThe filings also confirm that \"There were no changes in our internal control over financial reporting during the quarter ended June 30, 2026 that have materially affected, or are reasonably likely to materially affect, our internal control over financial reporting\" [0001193125-26-323660 | part_ii_item_9a].\n\nSimilar conclusions were reached in earlier filings, with management consistently concluding that internal controls were effective and no material weaknesses were identified.",
+    "latency_ms": 14777,
+    "run": 1
+  },
+  {
+    "id": "absence_rddt_going_concern",
+    "shape": "absence",
+    "passed": false,
+    "failures": [
       "citations: no citations found"
     ],
     "tool_calls": [
-      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2026-07-26\", \"until\": \"2026-07-26\", \"quarters\": 1})",
-      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2026-07-01\", \"until\": \"2026-07-31\"})",
-      "get_company_metrics({\"ticker\": \"NVDA\"})"
+      "search_chunks({\"query\": \"going concern substantial doubt ability to continue as a going concern\", \"ticker\": \"RDDT\"})"
     ],
     "citation_problems": [
       "no citations found"
     ],
-    "answer": "I apologize, but I'm experiencing a technical issue accessing the metrics data. The system is unable to retrieve NVIDIA's financial metrics at this time. Please try again in a moment.",
-    "latency_ms": 10767,
+    "answer": "The search results do not show any going-concern language in Reddit's filings. The results returned various accounting-related passages about contingencies, estimates, and legal matters, but none contain the standard going-concern warning that would indicate substantial doubt about the company's ability to continue as a going concern.\n\nNo, Reddit's filings do not include going-concern language based on the available search results.",
+    "latency_ms": 6376,
+    "run": 1
+  },
+  {
+    "id": "cross_nvda_googl_margin",
+    "shape": "cross_company",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"NVDA\", \"since\": \"2026-04-01\", \"until\": \"2026-09-30\", \"quarters\": 2})",
+      "get_company_metrics({\"ticker\": \"GOOGL\", \"since\": \"2026-04-01\", \"until\": \"2026-09-30\", \"quarters\": 2})"
+    ],
+    "citation_problems": [],
+    "answer": "NVIDIA had a higher gross margin in mid-2026.\n\nFor the quarter ending July 26, 2026, NVIDIA's gross margin was **75.0%** [0001045810-26-000075].\n\nFor the quarter ending June 30, 2026, Alphabet's gross margin was **61.6%** [0001652044-26-000071].\n\nNVIDIA's gross margin exceeded Alphabet's by 13.4 percentage points during this period.",
+    "latency_ms": 5670,
+    "run": 1
+  },
+  {
+    "id": "cross_nvda_googl_roe",
+    "shape": "cross_company",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"NVDA\", \"quarters\": 1})",
+      "get_company_metrics({\"ticker\": \"GOOGL\", \"quarters\": 1})"
+    ],
+    "citation_problems": [],
+    "answer": "Based on the most recent reported quarters:\n\n**NVIDIA** (quarter ending July 26, 2026):\n- Return on Equity: **28.1%** [0001045810-26-000075]\n\n**Alphabet** (quarter ending June 30, 2026):\n- Return on Equity: **20.0%** [0001652044-26-000071]\n\nNVIDIA's return on equity of 28.1% exceeds Alphabet's 20.0% by 8.1 percentage points in their most recent reported quarters. NVIDIA also shows a higher return on assets (20.6% vs. 13.8%) [0001045810-26-000075, 0001652044-26-000071].",
+    "latency_ms": 6120,
+    "run": 1
+  },
+  {
+    "id": "cross_missing_margin",
+    "shape": "cross_company",
+    "passed": true,
+    "failures": [],
+    "tool_calls": [
+      "get_company_metrics({\"ticker\": \"JPM\", \"since\": \"2026-06-30\", \"until\": \"2026-06-30\", \"quarters\": 1})"
+    ],
+    "citation_problems": [],
+    "answer": "JPMorgan did not report a gross margin for the quarter ending June 30, 2026 [0001628280-26-054343]. This is typical for financial services companies like JPMorgan Chase, as gross margin is a metric primarily used for companies that sell physical goods or products. Banks and financial institutions typically report different profitability metrics such as net interest margin, return on assets (ROA), and return on equity (ROE) instead.\n\nFor that quarter, JPMorgan reported:\n- Revenue: $57.3 billion [0001628280-26-054343]\n- Net income: $21.2 billion [0001628280-26-054343]\n- ROA: 0.4% [0001628280-26-054343]\n- ROE: 5.7% [0001628280-26-054343]",
+    "latency_ms": 7583,
     "run": 1
   }
 ]
