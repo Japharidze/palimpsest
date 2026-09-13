@@ -332,32 +332,67 @@ def fetch_company_recent_changes(
     return rows
 
 
-def fetch_feed_changes(pool: ConnectionPool, limit: int) -> list[dict]:
+def fetch_feed_changes(
+    pool: ConnectionPool, limit: int, per_company: int = 2
+) -> list[dict]:
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """
-            select ticker, company_name, cik, label, change_type,
-                to_filing_date, to_accession, from_accession, from_text, to_text, similarity, summary,
-                round((
-                    case
-                        when change_type in ('added', 'removed') then 1.0
-                        else 1.0 - coalesce(similarity, 1.0)
-                    end
-                    * case label
-                        when 'risk_factors' then 1.0
-                        when 'legal_proceedings' then 0.9
-                        when 'cybersecurity' then 0.8
-                        when 'mda' then 0.6
-                        when 'controls' then 0.4
-                        else 0.3
+            with scored as (
+                select
+                    ticker, company_name, cik, label, change_type,
+                    to_filing_date, to_accession, from_accession,
+                    from_text, to_text, similarity, summary,
+                    round((
+                        -- severity: how much of the passage actually moved
+                        case
+                            when change_type in ('added', 'removed') then 0.85
+                            else 1.0 - coalesce(similarity, 1.0)
                         end
-                )::numeric, 3) as importance
-            from analytics.rpt_section_changes
-            where summary is not null
+                        -- magnitude: a paragraph outweighs a sentence, with
+                        -- diminishing returns so a long boilerplate block
+                        -- cannot dominate
+                        * least(
+                            1.0,
+                            0.4 + 0.6 * ln(1 + length(coalesce(to_text, from_text, '')))
+                                        / ln(1 + 2000)
+                          )
+                        -- section weight
+                        * case label
+                            when 'risk_factors'      then 1.0
+                            when 'legal_proceedings' then 0.9
+                            when 'cybersecurity'     then 0.8
+                            when 'mda'               then 0.6
+                            when 'controls'          then 0.4
+                            else 0.3
+                          end
+                    )::numeric, 3) as importance
+                from analytics.rpt_section_changes
+                where summary is not null
+            ),
+            ranked as (
+                select *,
+                    row_number() over (
+                        partition by cik, label
+                        order by importance desc, to_filing_date desc
+                    ) as rn_label,
+                    row_number() over (
+                        partition by cik
+                        order by importance desc, to_filing_date desc
+                    ) as rn_company
+                from scored
+            )
+            select
+                ticker, company_name, cik, label, change_type,
+                to_filing_date, to_accession, from_accession,
+                from_text, to_text, similarity, summary, importance
+            from ranked
+            where rn_label = 1
+              and rn_company <= %s
             order by importance desc, to_filing_date desc
             limit %s
-                """,
-            (limit,),
+            """,
+            (per_company, limit),
         )
         rows = cur.fetchall()
 
