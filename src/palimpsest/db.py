@@ -321,6 +321,7 @@ def fetch_company_recent_changes(
                 from analytics.rpt_section_changes
                 where cik = %s
                 and (%s::text is null or label = %s)
+                and summary is not null
                 order by to_filing_date desc, label, position
                 limit %s
                 """,
