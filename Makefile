@@ -1,8 +1,10 @@
-include .env
+ENV_FILE ?= .env
+-include $(ENV_FILE)
 
-.PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking eval api web dev
+.PHONY: db up down migrate fresh dbt dbt-stage dbt-rpt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking ingest eval api web dev railway
 
 PSQL_CMD = PGPASSWORD=$(POSTGRES_PASSWORD) psql -h localhost -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+DBT = cd dbt && DBT_PROFILES_DIR=. uv run dbt
 
 up:
 	docker compose up -d
@@ -19,14 +21,28 @@ psql:
 migrate:
 	uv run palim migrate
 
+dbt-seed:
+	$(DBT) seed
+
+# seeds + staging + metric marts; everything that does not depend on summaries
+dbt-stage:
+	$(DBT) seed
+	$(DBT) run --exclude rpt_section_changes+
+
+# report models built on change_summaries; must run after summarize
+dbt-rpt:
+	$(DBT) run --select rpt_section_changes+
+
 dbt:
-	cd dbt && DBT_PROFILES_DIR=. uv run dbt seed
-	cd dbt && DBT_PROFILES_DIR=. uv run dbt run
+	$(DBT) seed
+	$(DBT) run
+
 dbt-test:
-	cd dbt && DBT_PROFILES_DIR=. uv run dbt test
+	$(DBT) test
+
 dbt-docs:
-	cd dbt && DBT_PROFILES_DIR=. uv run dbt docs generate
-	cd dbt && DBT_PROFILES_DIR=. uv run dbt docs serve
+	$(DBT) docs generate
+	$(DBT) docs serve
 
 reset:
 	docker compose down -v
@@ -54,15 +70,27 @@ summarize:
 chunking:
 	uv run palim vectorize-sections
 
+# incremental pipeline; what cron runs
+ingest:
+	$(MAKE) sync
+	$(MAKE) dbt-stage
+	$(MAKE) diff
+	$(MAKE) summarize
+	$(MAKE) chunking
+	$(MAKE) dbt-rpt
+	$(MAKE) dbt-test
+
 fresh:
 	$(MAKE) dump-summaries
 	$(MAKE) reset
-	$(MAKE) init-data sync dbt
+	$(MAKE) init-data
+	$(MAKE) sync
+	$(MAKE) dbt-stage
 	$(MAKE) diff
 	$(MAKE) restore-summaries
 	$(MAKE) summarize
 	$(MAKE) chunking
-
+	$(MAKE) dbt-rpt
 
 dump-summaries:
 	@docker compose exec -T postgres pg_dump -U $(POSTGRES_USER) -d $(POSTGRES_DB) \
