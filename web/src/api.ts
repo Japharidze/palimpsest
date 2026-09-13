@@ -1,5 +1,6 @@
 import fixture from "./fixtures/ask.json";
 
+const BASE = import.meta.env.API_URL ?? "";
 const MOCK = false;  // TODO: make false before deploy;
 
 // ---------------------------------------------------------------- types
@@ -130,7 +131,7 @@ export interface EvalResult {
 // ------------------------------------------------------------- internals
 
 async function get<T>(path: string): Promise<T> {
-  const r = await fetch(path);
+  const r = await fetch(`${BASE}${path}`);
   if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
   return r.json();
 }
@@ -198,7 +199,7 @@ export async function ask(
     return fixture as AskResponse;
   }
 
-  const r = await fetch("/api/ask", {
+  const r = await fetch(`${BASE}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, conversation_id: conversationId }),
