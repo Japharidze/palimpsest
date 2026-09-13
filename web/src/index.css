@@ -141,7 +141,15 @@ ul {
   padding: 0.4rem 0.75rem;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
-  overflow: hidden;
+}
+
+.statusbar .name {
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  padding-right: 1rem;
+  border-right: 1px solid var(--border);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .statusbar .corpus {
@@ -177,6 +185,55 @@ ul {
   max-width: 100%;
   margin: 1rem 0;
 }
+
+/* ------------------------------------------------------ popover */
+
+.popover {
+  position: relative;
+}
+
+.popover-label {
+  padding: 0;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border-bottom: 1px dotted var(--dim);
+}
+
+.popover-body {
+  position: absolute;
+  top: 1.6em;
+  right: 0;
+  z-index: 50;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  white-space: nowrap;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.popover-body td:first-child {
+  padding-right: 0.5rem;
+  color: var(--dim);
+}
+
+.popover-body .shape {
+  padding-left: 1rem;
+  color: var(--dim);
+}
+
+.popover-body .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.popover-body .dot.ok { background: var(--green); }
+.popover-body .dot.fail { background: var(--warn); }
 
 /* ------------------------------------------------------ transcript */
 

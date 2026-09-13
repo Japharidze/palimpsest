@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getEvals, getMeta, type EvalResult, type Meta } from "../api";
+import { Popover } from "./Popover";
 
 const GITHUB = "https://github.com/Japharidze/palimpsest";
 
@@ -18,28 +19,67 @@ export function Statusbar({ onAbout }: { onAbout: () => void }) {
     getEvals().then(setEvals).catch(() => { });
   }, []);
 
-  const passed = evals?.filter((e) => e.passed).length;
+  const passed = evals?.filter((e) => e.passed).length ?? 0;
+
+  const byShape = new Map<string, { passed: number; total: number }>();
+  for (const e of evals ?? []) {
+    const s = byShape.get(e.shape) ?? { passed: 0, total: 0 };
+    s.total += 1;
+    if (e.passed) s.passed += 1;
+    byShape.set(e.shape, s);
+  }
 
   return (
     <header className="statusbar">
-      <span className="name">palimpsest</span>
+      <a className="name" href={GITHUB} target="_blank" rel="noreferrer">
+        palimpsest
+      </a>
 
       {meta && (
         <span className="corpus">
-          {meta.corpus.companies} companies · {meta.corpus.filings} filings ·{" "}
-          {compact(meta.corpus.facts)} facts · {compact(meta.corpus.chunks)} chunks
+          {compact(meta.corpus.chunks)} chunks · {compact(meta.corpus.facts)} facts ·{" "}
+          {meta.corpus.companies} companies · {meta.corpus.filings} filings
           {meta.corpus.latest_filing && ` · latest ${meta.corpus.latest_filing}`}
         </span>
       )}
 
       <span className="spacer" />
 
-      {meta && <span className="models">{meta.agent_model}</span>}
+      {meta && (
+        <Popover label={meta.agent_model}>
+          <table className="models">
+            <tbody>
+              <tr>
+                <td>agent</td>
+                <td>{meta.agent_model}</td>
+              </tr>
+              <tr>
+                <td>summarizer</td>
+                <td>{meta.summarizer_model}</td>
+              </tr>
+              <tr>
+                <td>embedding</td>
+                <td>{meta.embedding_model}</td>
+              </tr>
+            </tbody>
+          </table>
+        </Popover>
+      )}
 
       {evals && (
-        <span className="evals">
-          {passed}/{evals.length} evals
-        </span>
+        <Popover label={`${passed}/${evals.length} evals`}>
+          <table className="results">
+            <tbody>
+              {evals.map((e) => (
+                <tr key={e.id}>
+                  <td><span className={e.passed ? "dot ok" : "dot fail"} /></td>
+                  <td>{e.id.replace(/_/g, " ")}</td>
+                  <td className="shape">{e.shape.replace(/_/g, " ")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Popover>
       )}
 
       <button type="button" onClick={onAbout}>
