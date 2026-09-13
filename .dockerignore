@@ -10,7 +10,8 @@ data/
 docs/
 dbt/target/
 dbt/logs/
-evals/results/
+evals/results/*
+!evals/results/latest.json
 
 .env
 .env.local
