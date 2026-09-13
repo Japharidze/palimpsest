@@ -18,7 +18,7 @@ from psycopg_pool import ConnectionPool
 
 from palimpsest.agent.graph import build_graph
 from palimpsest.config import EVAL_RESULTS, settings
-from palimpsest.embedding import OllamaEmbedder
+from palimpsest.embedding import build_embedder
 
 GOLDEN = Path(__file__).parent / "golden.yaml"
 
@@ -140,7 +140,8 @@ def main() -> int:
 
     results = []
     with ConnectionPool(settings.db_url) as pool:
-        graph = build_graph(pool, OllamaEmbedder(settings.embedding_model), model)
+        embedder = build_embedder()
+        graph = build_graph(pool, embedder, model)
         for run in range(args.repeats):
             for case in cases:
                 print(f"  [{run + 1}/{args.repeats}] {case['id']} ...", flush=True)

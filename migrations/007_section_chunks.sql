@@ -6,7 +6,7 @@ create table section_chunks (
     start_offset int not null,
     end_offset int not null,
     content text not null,
-    embedding vector(${embed_dim}),
+    embedding vector(768),
     constraint chunks_uq unique
         (accession_number, section, chunk_index)
 );

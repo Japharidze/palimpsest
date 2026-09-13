@@ -1,7 +1,6 @@
 from pathlib import Path
-from string import Template
 
-from palimpsest.config import MIGRATIONS_DIR, settings
+from palimpsest.config import MIGRATIONS_DIR
 
 
 def apply_migrations(conn, migrations_dir: Path = MIGRATIONS_DIR) -> list[str]:
@@ -19,9 +18,7 @@ def apply_migrations(conn, migrations_dir: Path = MIGRATIONS_DIR) -> list[str]:
     pending = sorted(p for p in migrations_dir.glob("*.sql") if p.stem not in applied)
 
     for path in pending:
-        sql = Template(path.read_text()).safe_substitute(
-            embed_dim=settings.embedding_dim
-        )
+        sql = path.read_text()
         with (
             conn.transaction(),
             conn.cursor() as cur,

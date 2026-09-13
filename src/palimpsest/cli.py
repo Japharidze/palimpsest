@@ -15,7 +15,7 @@ from palimpsest.config import DATA_DIR, settings
 from palimpsest.db import add_to_watchlist, upsert_change_summaries, upsert_chunk
 from palimpsest.diffing import sync_changes
 from palimpsest.edgar import EdgarClient
-from palimpsest.embedding import OllamaEmbedder
+from palimpsest.embedding import build_embedder
 from palimpsest.ingest import (
     fetch_document,
     refresh_companies,
@@ -251,7 +251,7 @@ def summarize_changes_cmd() -> None:
 @app.command("vectorize-sections")
 def vectorize_sections_cmd():
     """Chunk -> Embed -> Store sections into table 'chunks'"""
-    embedder = OllamaEmbedder(settings.embedding_model)
+    embedder = build_embedder()
     with psycopg.connect(settings.db_url) as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -281,10 +281,9 @@ def vectorize_sections_cmd():
 
 @app.command("search")
 def search_cmd(question: Annotated[str, typer.Argument(help="Question text")]) -> None:
+    embedder = build_embedder()
     with psycopg.connect(settings.db_url) as conn:
-        nearest_chunks = search(
-            conn, OllamaEmbedder(settings.embedding_model), question
-        )
+        nearest_chunks = search(conn, embedder, question)
     for r in nearest_chunks:
         typer.echo(
             f"\n[{r['distance']:.3f}] {r['cik']} {r['accession_number']} "
@@ -297,7 +296,7 @@ def search_cmd(question: Annotated[str, typer.Argument(help="Question text")]) -
 def debug_graph_cmd(
     question: Annotated[str, typer.Argument(help="Question text for agent")],
 ) -> None:
-    embedder = OllamaEmbedder(settings.embedding_model)
+    embedder = build_embedder()
     agent_model = build_llm(
         settings.agent_provider, settings.agent_model, settings.anthropic_api_key
     )

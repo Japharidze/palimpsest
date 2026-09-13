@@ -29,19 +29,19 @@ def _get_chunks(text: str) -> list[tuple[tuple, str]]:
 def vectorize_sections(
     embedder: Embedder, accn: str, section: str, content: str
 ) -> Generator[tuple]:
-    for idx, ((start_offset, end_offset), chunk) in enumerate(_get_chunks(content)):
+    chunks = _get_chunks(content)
+    if not chunks:
+        return
+
+    vectors = embedder.embed_batch([text for _, text in chunks])
+
+    for idx, (((start_offset, end_offset), chunk), vector) in enumerate(
+        zip(chunks, vectors)
+    ):
         assert content[start_offset:end_offset] == chunk, (
             "Chunk doesn't correspond to offset range"
         )
-        yield (
-            accn,
-            section,
-            idx,
-            start_offset,
-            end_offset,
-            chunk,
-            embedder.embed(chunk),
-        )
+        yield (accn, section, idx, start_offset, end_offset, chunk, vector)
 
 
 def search(
@@ -98,15 +98,18 @@ def search(
     """
     vector = embedder.embed(text)
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
-        cur.execute(query, {
+        cur.execute(
+            query,
+            {
                 "vec": vector,
                 "ticker": ticker,
                 "form": form,
                 "section": section,
                 "since": since,
                 "per_section": 3,
-                "limit": limit
-            })
+                "limit": limit,
+            },
+        )
         nearest_chunks = cur.fetchall()
 
     return nearest_chunks

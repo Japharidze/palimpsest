@@ -7,7 +7,7 @@ from psycopg_pool import ConnectionPool
 from palimpsest.agent.graph import build_graph
 from palimpsest.api.routes import router
 from palimpsest.config import settings
-from palimpsest.embedding import OllamaEmbedder
+from palimpsest.embedding import build_embedder
 from palimpsest.llm import build_llm
 
 
@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     app.state.shared_objects = {}
 
     pool = ConnectionPool(settings.db_url, min_size=2, max_size=10)
-    embedder = OllamaEmbedder(settings.embedding_model)
+    embedder = build_embedder()
 
     app.state.pool = pool
     app.state.embedder = embedder

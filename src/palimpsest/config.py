@@ -22,13 +22,14 @@ class Settings(BaseSettings):
     summarizer_provider: str
     summarizer_model: str
 
-    embedding_dim: int
-    embedding_model: str
+    embedding_provider: str = "ollama"
+    embedding_model: str = "nomic-embed-text"
 
     agent_provider: str
     agent_model: str
 
-    anthropic_api_key: str | None  # only needed when one of providers is anthropic
+    anthropic_api_key: str | None = None  # only needed when one of providers is anthropic
+    openai_api_key: str | None = None     # only needed when one of providers is openai
 
     @property
     def db_url(self) -> str:
