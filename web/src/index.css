@@ -237,6 +237,44 @@ ul {
   color: var(--fg);
 }
 
+.company > header {
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+.company table {
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.company td {
+  padding: 0.1rem 0.5rem 0.1rem 0;
+}
+
+.company td:first-child {
+  color: var(--dim);
+}
+
+.company td:last-child {
+  text-align: right;
+  padding-left: 2rem;
+}
+
+.company .changes li {
+  margin: 0.5rem 0;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--border);
+  cursor: pointer;
+}
+
+.company .changes li.removed { border-left-color: var(--warn); }
+.company .changes li.added { border-left-color: var(--green); }
+.company .changes li.modified { border-left-color: var(--yellow); }
+
+.company .changes .summary {
+  color: var(--dim);
+}
+
 .chip {
   padding: 0 0.3rem;
   color: var(--dim);

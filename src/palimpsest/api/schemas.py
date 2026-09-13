@@ -61,8 +61,8 @@ class AskResponse(BaseModel):
 class QuarterlyRow(BaseModel):
     period_end: date
     source_accn: AccessionNumber | None
-    revenue: Decimal | None
-    net_income: Decimal | None
+    revenue: float | None
+    net_income: float | None
     gross_margin_pct: Decimal | None
     roa_pct: Decimal | None
     roe_pct: Decimal | None

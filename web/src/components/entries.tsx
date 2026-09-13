@@ -136,6 +136,7 @@ export function CompanyEntry({
         <ul className="changes">
           {entry.changes.map((c, i) => (
             <li
+              className={c.change_type}
               key={i}
               onClick={() =>
                 onCite(
@@ -144,7 +145,7 @@ export function CompanyEntry({
                 )
               }
             >
-              {c.label} · {c.change_type} · {c.to_filing_date}
+              {c.label} · {c.to_filing_date}
               {c.summary && <div className="summary">{c.summary}</div>}
             </li>
           ))}
