@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,7 +10,10 @@ EVAL_RESULTS = ROOT / "evals" / "results"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=ROOT / ".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=os.getenv("ENV_FILE", ROOT / ".env"),
+        extra="ignore"
+    )
 
     postgres_user: str
     postgres_password: str
@@ -19,14 +23,14 @@ class Settings(BaseSettings):
 
     sec_user_agent: str
 
-    summarizer_provider: str
-    summarizer_model: str
+    summarizer_provider: str = "anthropic"
+    summarizer_model: str = "claude-haiku-4-5-20251001"
 
     embedding_provider: str = "ollama"
     embedding_model: str = "nomic-embed-text"
 
-    agent_provider: str
-    agent_model: str
+    agent_provider: str = "anthropic"
+    agent_model: str = "claude-haiku-4-5-20251001"
 
     anthropic_api_key: str | None = None  # only needed when one of providers is anthropic
     openai_api_key: str | None = None     # only needed when one of providers is openai

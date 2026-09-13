@@ -1,5 +1,4 @@
 include .env
-export
 
 .PHONY: db up down migrate fresh dbt dbt-seed dbt-docs psql dbt-test reset init-data sync diff summarize dump-summaries restore-summaries chunking eval api web dev
 
@@ -100,3 +99,6 @@ web:
 
 dev:
 	@$(MAKE) -j2 api web
+
+railway:
+	@ENV_FILE=.env.railway $(MAKE) $(TARGET)

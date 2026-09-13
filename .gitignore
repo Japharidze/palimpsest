@@ -221,6 +221,7 @@ __marimo__/
 data/
 evals/results/
 *:Zone.Identifier
+.env.railway
 
 # Web
 web/node_modules/
