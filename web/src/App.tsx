@@ -53,6 +53,7 @@ function App() {
     <div className="layout">
       <Statusbar onAbout={() => setAboutOpen(true)} />
       <main>
+        <h2>conversation</h2>
         <Transcript entries={entries} onCite={(accession, section) => setCitation({ accession, section })} busy={busy} />
         <Input onSubmit={handleAsk} disabled={busy} />
       </main>

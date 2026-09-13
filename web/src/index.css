@@ -1,63 +1,326 @@
+:root {
+  --bg: #1e1e2e;
+  --fg: #cdd6f4;
+  --dim: #6c7086;
+  --border: #313244;
+  --accent: #89b4fa;
+  --warn: #f38ba8;
+
+  --green: #a6e3a1;
+  --yellow: #f9e2af;
+  --mauve: #cba6f7;
+  --peach: #fab387;
+
+  --mono: ui-monospace, "JetBrains Mono", "IBM Plex Mono", monospace;
+  --size: 13px;
+  --gap: 0.75rem;
+}
+
+/* ------------------------------------------------------------ base */
+
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: var(--size);
+  line-height: 1.5;
 }
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  border: 2px solid red
+
+a {
+  color: var(--accent);
+  text-decoration: none;
 }
-.panel {
-  background: white;
-  color: black;
-  max-width: 60rem;
-  max-height: 80vh;
-  overflow: auto;
-  padding: 1rem;
+
+a:hover {
+  text-decoration: underline;
 }
-.panel pre {
-  white-space: pre-wrap;
-  word-break: break-word;
+
+button,
+input {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--border);
 }
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------------------------------------------------------- layout */
+
 .layout {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
     "header header"
     "main   aside";
   height: 100vh;
   gap: 1px;
 }
-.layout > header { grid-area: header; }
+
+.layout > header {
+  grid-area: header;
+}
+
+.layout > main {
+  grid-area: main;
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 0;
+  margin: 0.5rem;
+  padding-top: 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
+
 .layout > aside {
   grid-area: aside;
   overflow-y: auto;
   min-height: 0;
+  min-width: 0;
+  padding: 0;
 }
-.layout > main {
-  grid-area: main;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  min-height: 0;
+
+.layout > main > h2 {
+  position: absolute;
+  top: -0.7em;
+  left: 0.75rem;
+  margin: 0;
+  padding: 0 0.4rem;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 1em;
+  font-weight: normal;
 }
-.transcript {
-  overflow-y: auto;
-  min-height: 0;
+
+.layout > main > form {
+  display: flex;
+  gap: 0.5rem;
+  padding: var(--gap);
+  border-top: 1px solid var(--border);
 }
+
+.layout > main > form input {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+}
+
+.layout > main > form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ------------------------------------------------------- statusbar */
+
 .statusbar {
   display: flex;
   align-items: center;
   gap: 1rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
 }
+
+.statusbar .corpus {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
 .statusbar .spacer {
   flex: 1;
+}
+
+.statusbar .models,
+.statusbar .evals,
+.statusbar button,
+.statusbar a {
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------ transcript */
+
+.transcript {
+  overflow-y: auto;
+  min-height: 0;
+  padding: var(--gap);
+}
+
+.transcript > * {
+  margin-bottom: 1.25rem;
+}
+
+.transcript p:first-child {
+  color: var(--accent);
+}
+
+.trace {
+  color: var(--dim);
+  border-left: 2px solid var(--border);
+  padding-left: 0.75rem;
+  font-size: 0.9em;
+}
+
+.warn {
+  color: var(--warn);
+  font-size: 0.9em;
+}
+
+.answer h1,
+.answer h2,
+.answer h3 {
+  margin: 1rem 0 0.25rem;
+  color: var(--accent);
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.answer p,
+.answer ul,
+.answer ol {
+  margin: 0.5rem 0;
+}
+
+.answer li {
+  margin: 0.15rem 0;
+}
+
+.answer strong {
+  color: var(--fg);
+  font-weight: bold;
+}
+
+.answer blockquote {
+  margin: 0.5rem 0;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--accent);
+  color: var(--fg);
+}
+
+.chip {
+  padding: 0 0.3rem;
+  color: var(--dim);
+  border: 1px solid var(--border);
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ----------------------------------------------------------- aside */
+
+aside section {
+  position: relative;
+  margin: 0.5rem;
+  padding-top: 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
+
+aside section > h2 {
+  position: absolute;
+  top: -0.7em;
+  left: 0.75rem;
+  margin: 0;
+  padding: 0 0.4rem;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 1em;
+  font-weight: normal;
+}
+
+aside li {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+aside li:hover {
+  background: var(--border);
+}
+
+.feed li {
+  display: grid;
+  grid-template-columns: 3px 1fr;
+  grid-template-rows: auto auto;
+  gap: 0.1rem 0.5rem;
+  min-width: 0;
+}
+
+.feed .marker {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  background: var(--dim);
+}
+
+.feed li.added .marker {
+  background: var(--green);
+}
+
+.feed li.removed .marker {
+  background: var(--warn);
+}
+
+.feed li.modified .marker {
+  background: var(--yellow);
+}
+
+.feed .meta {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--dim);
+  font-size: 0.9em;
+}
+
+.feed .summary {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  color: var(--fg);
+  overflow-wrap: break-word;
+}
+
+/* --------------------------------------------------------- overlay */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.overlay .panel {
+  max-width: 60rem;
+  max-height: 80vh;
+  overflow: auto;
+  padding: 1rem;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
+
+.overlay .panel pre {
+  white-space: pre-wrap;
+  word-break: break-word;
 }

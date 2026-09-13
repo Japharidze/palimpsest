@@ -14,12 +14,17 @@ export function Feed({ onCite }: { onCite: (accession: string, section?: string)
   if (error) return <div>failed to load {error}</div>
 
   return (
-    <ul>
-      {changes.map((c, i) => (
-        <li key={`${i}`} onClick={() => onCite(c.change_type === "removed" ? c.from_accession : c.to_accession, c.label)}>
-          {c.ticker} - {c.label} {c.change_type} {c.to_filing_date} {c.summary}
-        </li>
-      ))}
-    </ul>
+    <section className="feed">
+      <h2>recent changes</h2>
+      <ul>
+        {changes.map((c, i) => (
+          <li className={c.change_type} key={`${i}`} onClick={() => onCite(c.change_type === "removed" ? c.from_accession : c.to_accession, c.label)}>
+            <span className="marker" />
+            <span className="meta">{c.ticker} · {c.label} · {c.to_filing_date}</span>
+            <span className="summary">{c.summary}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

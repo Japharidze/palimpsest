@@ -14,12 +14,15 @@ export function Watchlist({ onSelect }: { onSelect: (ticker: string, name: strin
   if (error) return <div>failed to load: {error}</div>
 
   return (
-    <ul>
-      {companies.map((c) => (
-        <li key={c.ticker} onClick={() => onSelect(c.ticker, c.name)}>
-          {c.ticker.split("; ")[0]} {c.name} {c.period_end}
-        </li>
-      ))}
-    </ul>
+    <section>
+      <h2>watchlist</h2>
+      <ul>
+        {companies.map((c) => (
+          <li key={c.ticker} onClick={() => onSelect(c.ticker, c.name)}>
+            {c.ticker.split("; ")[0]} {c.name} {c.period_end}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
