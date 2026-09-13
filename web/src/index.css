@@ -282,6 +282,18 @@ aside li:hover {
   background: var(--border);
 }
 
+.watchlist li {
+  display: grid;
+  grid-template-columns: 4rem 1fr auto;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.watchlist .ticker { color: var(--accent); }
+.watchlist .name   { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.watchlist .period { display:flex; color: var(--dim); font-size: 0.9em; align-items: center; gap: 3px; }
+.watchlist .dot    { width: 5px; height: 5px; border-radius: 50%; background: var(--peach); flex-shrink: 0; }
+
 .feed li {
   display: grid;
   grid-template-columns: 3px 1fr;
