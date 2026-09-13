@@ -337,7 +337,7 @@ def fetch_feed_changes(pool: ConnectionPool, limit: int) -> list[dict]:
         cur.execute(
             """
             select ticker, company_name, cik, label, change_type,
-                to_filing_date, to_accession, from_accession, similarity, summary,
+                to_filing_date, to_accession, from_accession, from_text, to_text, similarity, summary,
                 round((
                     case
                         when change_type in ('added', 'removed') then 1.0

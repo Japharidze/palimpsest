@@ -52,6 +52,8 @@ export interface FeedChange {
   to_filing_date: string;
   to_accession: string;
   from_accession: string;
+  from_text: string | null;
+  to_text: string | null;
   similarity: number | null;
   summary: string;
   importance: number;

@@ -39,6 +39,8 @@ class FeedChange(BaseModel):
     to_filing_date: date
     to_accession: AccessionNumber
     from_accession: AccessionNumber
+    from_text: str | None
+    to_text: str | None
     similarity: float | None
     summary: str
     importance: float
