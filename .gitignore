@@ -220,6 +220,7 @@ __marimo__/
 # Custom
 data/
 evals/results/
+*:Zone.Identifier
 
 # Web
 web/node_modules/

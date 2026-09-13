@@ -42,6 +42,15 @@ a:hover {
   text-decoration: underline;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 button,
 input {
   font-family: inherit;
@@ -150,6 +159,23 @@ ul {
 .statusbar button,
 .statusbar a {
   flex-shrink: 0;
+}
+
+.about {
+  max-width: 46rem;
+  line-height: 1.6;
+}
+
+.about h3 {
+  margin: 1.5rem 0 0.25rem;
+  color: var(--accent);
+  font-size: 1em;
+  font-weight: normal;
+}
+
+.about img {
+  max-width: 100%;
+  margin: 1rem 0;
 }
 
 /* ------------------------------------------------------ transcript */
