@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type Entry } from "./types.ts"
-import { ask, getChanges, getMetrics, type QuarterlyRow } from "./api";
+import { ask, getChanges, getMetrics } from "./api";
 import { Watchlist } from "./components/Watchlist";
 import { Statusbar } from "./components/Statusbar.tsx";
 import { Transcript } from "./components/Transcript.tsx";
