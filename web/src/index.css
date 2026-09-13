@@ -247,6 +247,42 @@ ul {
   margin-bottom: 1.25rem;
 }
 
+.transcript.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder {
+  max-width: 34rem;
+  color: var(--dim);
+  text-align: center;
+}
+
+.placeholder .lead {
+  color: var(--fg);
+  margin-bottom: 2rem;
+}
+
+.placeholder .hint {
+  color: var(--dim);
+  font-size: 0.9em;
+  margin-bottom: 0.5rem;
+}
+
+.placeholder li {
+  margin: 0.5rem 0;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.placeholder li:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .trace {
   color: var(--dim);
   border-left: 2px solid var(--border);

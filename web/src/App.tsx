@@ -15,6 +15,7 @@ function App() {
   const [busy, setBusy] = useState<boolean>(false);
   const [citation, setCitation] = useState<{ accession: string; section?: string; quote?: string } | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [draft, setDraft] = useState<string>("");
 
   function handleCite(accession: string, section?: string, quote?: string) {
     setCitation({ accession, section, quote })
@@ -41,6 +42,7 @@ function App() {
       setEntries((prev) => [...prev, { kind: "error", text: String(e) }]);
     } finally {
       setBusy(false)
+      setDraft("");
     }
   }
 
@@ -58,8 +60,8 @@ function App() {
       <Statusbar onAbout={() => setAboutOpen(true)} />
       <main>
         <h2>conversation</h2>
-        <Transcript entries={entries} onCite={handleCite} busy={busy} />
-        <Input onSubmit={handleAsk} disabled={busy} />
+        <Transcript entries={entries} onCite={handleCite} onPick={setDraft} busy={busy} />
+        <Input value={draft} onChange={setDraft} onSubmit={handleAsk} disabled={busy} />
       </main>
       <aside>
         <Watchlist onSelect={handleCompany} />

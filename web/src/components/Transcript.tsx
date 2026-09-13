@@ -2,9 +2,16 @@ import { useEffect, useRef } from "react";
 import type { Entry } from "../types";
 import { AnswerEntry, CompanyEntry, ErrorEntry, QuestionEntry, TraceEntry } from "./entries";
 
-export function Transcript({ entries, onCite, busy }: {
+const EXAMPLES = [
+  "Has NVIDIA's gross margin recovered from its 2025 dip?",
+  "What risk factors did Reddit add in its most recent 10-Q?",
+  "Why did Coca-Cola's operating income change last quarter?",
+];
+
+export function Transcript({ entries, onCite, onPick, busy }: {
   entries: Entry[];
   onCite: (accession: string, section?: string, quote?: string) => void;
+  onPick: (question: string) => void;
   busy: boolean
 }) {
   const endRef = useRef<HTMLDivElement>(null);
@@ -12,6 +19,24 @@ export function Transcript({ entries, onCite, busy }: {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [entries]);
+
+  if (entries.length === 0) {
+    return (
+      <div className="transcript empty">
+        <div className="placeholder">
+          <p className="lead">Ask about a filing, or pick a company from the watchlist.</p>
+          <p className="hint">for example</p>
+          <ul>
+            {EXAMPLES.map((q) => (
+              <li key={q} onClick={() => onPick(q)}>
+                {q}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="transcript">
