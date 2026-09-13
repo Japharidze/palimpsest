@@ -5,7 +5,11 @@ import { daysSince, linkify, tidy } from "../format";
 const STALE_DAYS = 200;
 
 export function QuestionEntry({ text }: { text: string }) {
-  return <p>&gt; {text}</p>;
+  return (
+    <p className="question">
+      <span className="prompt">&gt;</span> {text}
+    </p>
+  );
 }
 
 export function TraceEntry({ entry }: { entry: Extract<Entry, { kind: "trace" }> }) {

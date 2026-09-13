@@ -190,10 +190,6 @@ ul {
   margin-bottom: 1.25rem;
 }
 
-.transcript p:first-child {
-  color: var(--accent);
-}
-
 .trace {
   color: var(--dim);
   border-left: 2px solid var(--border);
@@ -204,6 +200,23 @@ ul {
 .warn {
   color: var(--warn);
   font-size: 0.9em;
+}
+
+.question {
+  margin-top: 2rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--fg);
+}
+
+.question .prompt {
+  color: var(--accent);
+  opacity: 0.6;
+}
+
+.transcript > .question:first-child {
+  margin-top: 0;
 }
 
 .answer h1,
