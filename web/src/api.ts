@@ -139,11 +139,11 @@ async function get<T>(path: string): Promise<T> {
 // ------------------------------------------------------------- endpoints
 
 export async function getMeta(): Promise<Meta> {
-  return get<Meta>("/api/meta");
+  return get<Meta>("/meta");
 }
 
 export async function getCompanies(): Promise<Company[]> {
-  return get<Company[]>("/api/companies");
+  return get<Company[]>("/companies");
 }
 
 export async function getMetrics(
@@ -154,7 +154,7 @@ export async function getMetrics(
   const params = new URLSearchParams();
   if (since) params.set("since", since);
   if (until) params.set("until", until);
-  return get<QuarterlyRow[]>(`/api/companies/${ticker}/metrics?${params}`);
+  return get<QuarterlyRow[]>(`/companies/${ticker}/metrics?${params}`);
 }
 
 export async function getChanges(
@@ -164,11 +164,11 @@ export async function getChanges(
 ): Promise<RecentChange[]> {
   const params = new URLSearchParams({ limit: String(limit) });
   if (section) params.set("section", section);
-  return get<RecentChange[]>(`/api/companies/${ticker}/changes?${params}`);
+  return get<RecentChange[]>(`/companies/${ticker}/changes?${params}`);
 }
 
 export async function getFeed(limit = 20): Promise<FeedChange[]> {
-  return get<FeedChange[]>(`/api/companies/changes?limit=${limit}`);
+  return get<FeedChange[]>(`/companies/changes?limit=${limit}`);
 }
 
 export async function getSection(
@@ -179,15 +179,15 @@ export async function getSection(
   const params = new URLSearchParams();
   if (section) params.set("section", section);
   if (label) params.set("section_label", label);
-  return get<FilingSection>(`/api/filings/${accession}?${params}`);
+  return get<FilingSection>(`/filings/${accession}?${params}`);
 }
 
 export async function getFacts(accession: string): Promise<Fact[]> {
-  return get<Fact[]>(`/api/filings/${accession}/facts`);
+  return get<Fact[]>(`/filings/${accession}/facts`);
 }
 
 export async function getEvals(): Promise<EvalResult[]> {
-  return get<EvalResult[]>("/api/evals");
+  return get<EvalResult[]>("/evals");
 }
 
 export async function ask(
