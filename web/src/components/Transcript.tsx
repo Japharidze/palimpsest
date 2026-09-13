@@ -25,7 +25,7 @@ export function Transcript({ entries, onCite, onPick, busy }: {
       <div className="transcript empty">
         <div className="placeholder">
           <p className="lead">Ask about a filing, or pick a company from the watchlist.</p>
-          <p className="hint">for example</p>
+          <p className="hint">Examples</p>
           <ul>
             {EXAMPLES.map((q) => (
               <li key={q} onClick={() => onPick(q)}>
