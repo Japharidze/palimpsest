@@ -148,10 +148,11 @@ def main() -> int:
 
     report(results)
 
-    EVAL_RESULTS.mkdir(exist_ok=True)
-    path = EVAL_RESULTS / f"{time.strftime('%Y%m%d-%H%M%S')}.json"
-    path.write_text(json.dumps(results, indent=2))
-    print(f"saved to {path}")
+    if not args.only and not args.shape:
+        EVAL_RESULTS.mkdir(exist_ok=True)
+        path = EVAL_RESULTS / f"{time.strftime('%Y%m%d-%H%M%S')}.json"
+        path.write_text(json.dumps(results, indent=2))
+        print(f"saved to {path}")
 
     return 0 if all(r["passed"] for r in results) else 1
 
