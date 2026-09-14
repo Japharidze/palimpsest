@@ -117,7 +117,9 @@ export interface Meta {
   agent_model: string;
   agent_provider: string;
   summarizer_model: string;
+  summarizer_provider: string;
   embedding_model: string;
+  embedding_provider: string;
   corpus: CorpusStats;
 }
 

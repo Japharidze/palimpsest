@@ -51,14 +51,17 @@ export function Statusbar({ onAbout, onMenu }: { onAbout: () => void; onMenu: ()
             <tbody>
               <tr>
                 <td>agent</td>
+                <td className="provider">{meta.agent_provider}</td>
                 <td>{meta.agent_model}</td>
               </tr>
               <tr>
                 <td>summarizer</td>
+                <td className="provider">{meta.summarizer_provider}</td>
                 <td>{meta.summarizer_model}</td>
               </tr>
               <tr>
                 <td>embedding</td>
+                <td className="provider">{meta.embedding_provider}</td>
                 <td>{meta.embedding_model}</td>
               </tr>
             </tbody>

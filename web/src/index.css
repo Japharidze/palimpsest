@@ -234,6 +234,12 @@ ul {
   color: var(--dim);
 }
 
+.popover-body .provider {
+  padding-right: 0.5rem;
+  color: color-mix(in srgb, var(--fg) 65%, var(--bg));
+  text-align: right;
+}
+
 .popover-body .shape {
   padding-left: 1rem;
   color: var(--dim);

@@ -116,5 +116,7 @@ class Meta(BaseModel):
     agent_model: str
     agent_provider: str
     summarizer_model: str
+    summarizer_provider: str
     embedding_model: str
+    embedding_provider: str
     corpus: CorpusStats

@@ -233,6 +233,8 @@ def meta(request: Request) -> Meta:
         agent_model=settings.agent_model,
         agent_provider=settings.agent_provider,
         summarizer_model=settings.summarizer_model,
+        summarizer_provider=settings.summarizer_provider,
         embedding_model=settings.embedding_model,
+        embedding_provider=settings.embedding_provider,
         corpus=CorpusStats(**stats),
     )
