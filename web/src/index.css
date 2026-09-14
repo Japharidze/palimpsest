@@ -221,6 +221,14 @@ ul {
   overflow-y: auto;
 }
 
+.popover-body th {
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--dim);
+  font-weight: normal;
+  text-align: left;
+}
+
 .popover-body td:first-child {
   padding-right: 0.5rem;
   color: var(--dim);
