@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type Entry } from "./types.ts"
-import { ask, getChanges, getMetrics } from "./api";
+import { ask, getChanges, getMetrics, type QuarterlyRow } from "./api";
 import { Watchlist } from "./components/Watchlist";
 import { Statusbar } from "./components/Statusbar.tsx";
 import { Transcript } from "./components/Transcript.tsx";
@@ -16,9 +16,11 @@ function App() {
   const [citation, setCitation] = useState<{ accession: string; section?: string; quote?: string } | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [draft, setDraft] = useState<string>("");
+  const [navOpen, setNavOpen] = useState<boolean>(false)
 
   function handleCite(accession: string, section?: string, quote?: string) {
     setCitation({ accession, section, quote })
+    setNavOpen(false);
   }
 
   async function handleAsk(question: string) {
@@ -53,17 +55,19 @@ function App() {
     ]);
 
     setEntries((prev) => [...prev, { kind: "company", ticker, name, metrics, changes }]);
+    setNavOpen(false);
   }
 
   return (
     <div className="layout">
-      <Statusbar onAbout={() => setAboutOpen(true)} />
+      <Statusbar onAbout={() => setAboutOpen(true)} onMenu={() => setNavOpen((o) => !o)} />
       <main>
         <h2>conversation</h2>
         <Transcript entries={entries} onCite={handleCite} onPick={setDraft} busy={busy} />
         <Input value={draft} onChange={setDraft} onSubmit={handleAsk} disabled={busy} />
       </main>
-      <aside>
+      {navOpen && <div className="scrim" onClick={() => setNavOpen(false)} />}
+      <aside className={navOpen ? "open" : undefined}>
         <Watchlist onSelect={handleCompany} />
         <Feed onCite={handleCite} />
       </aside>
