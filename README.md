@@ -18,6 +18,8 @@ A palimpsest is a manuscript that was scraped clean and written over, with the e
 
 Numbers come from XBRL and deterministic code. A language model is used only to read prose, and every claim it makes carries a citation that is checked against the filing before the answer is returned. Research tool, not investment advice.
 
+[**Live demo**](https://palimpsest.up.railway.app/) · [**API docs**](https://palimpsest-api.up.railway.app/docs)
+
 ![Palimpsest](docs/screenshot.png)
 
 ## Requirements
@@ -25,13 +27,13 @@ Numbers come from XBRL and deterministic code. A language model is used only to 
 - Python 3.12+ and [uv](https://docs.astral.sh/uv/)
 - Node 20+
 - Docker and Docker Compose
-- [Ollama](https://ollama.com) for local summarization and embeddings, with the models named in `.env` pulled beforehand
-- An Anthropic API key, if the agent is configured to use it
+- An OpenAI API key for embeddings, and an Anthropic API key for the agent
+- Optionally [Ollama](https://ollama.com) for local summarization during development, with the models named in `.env` pulled beforehand
 
 ## Setup
 
 ```bash
-git clone https://github.com/<user>/palimpsest.git
+git clone https://github.com/Japharidze/palimpsest.git
 cd palimpsest
 cp .env.example .env      # then edit SEC_USER_AGENT
 uv sync
@@ -41,6 +43,12 @@ make fresh
 `make fresh` starts Postgres, applies migrations, loads the watchlist, syncs filings and XBRL facts from EDGAR, extracts and diffs filing text, and builds the dbt models. It takes about an hour on a first run, most of it embedding.
 
 `SEC_USER_AGENT` must contain a real contact email. The SEC requires it on every request and throttles clients that omit it. No account or API key is needed.
+
+The frontend reads the API's address from an environment variable, so create `web/.env.local`:
+
+```
+VITE_API_URL=http://localhost:8000
+```
 
 Then, in two terminals:
 
@@ -64,8 +72,11 @@ uv run palim summarize-changes   # describe each change with a language model
 uv run palim vectorize-sections  # chunk and embed sections for retrieval
 make dbt                         # build the metric models
 make dbt-test                    # run data quality tests
+make ingest                      # the full incremental pipeline, in order
 make eval                        # run the golden question set
 ```
+
+`make ingest` is what the deployment runs on a schedule. The ordering matters: section diffing and chunking read dbt staging models, while the change report models read summaries, so dbt runs in two passes around the language steps.
 
 ## How it works
 
@@ -81,9 +92,11 @@ Citations are clickable. A citation naming a section opens that section with the
 
 ## Evaluation
 
-The agent is measured against a golden set of questions in `evals/golden.yaml`, each asserting what the answer must contain, which tools must be called, and whether every citation resolves to a real filing and section. Run `make eval`.
+The agent is measured against a golden set of questions in [`evals/golden.yaml`](evals/golden.yaml), each asserting what the answer must contain, which tools must be called, and whether every citation resolves to a real filing and section. Run `make eval`.
 
-Results are saved per run under `evals/results/`. Model choice matters: on the same set, a hosted small model passed 12 of 17 where a larger one passed 9, and local models below roughly 8B parameters could not compose multiple tools at all. The remaining failures are documented in the file.
+The most recent run is committed at [`evals/results/latest.json`](evals/results/latest.json) and is what the eval dashboard reads. Model choice matters: on the same set, a hosted small model passed 12 of 17 where a larger one passed 9, and local models below roughly 8B parameters could not compose multiple tools at all. The remaining failures are documented in the file.
+
+Absence questions are scored in the inverse direction: the correct answer cites nothing, so the missing-citation signal that counts as a problem in a normal answer counts as the expected outcome there.
 
 ## Limitations
 
