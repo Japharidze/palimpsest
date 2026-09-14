@@ -546,10 +546,10 @@ aside li:hover {
 .overlay tbody tr:nth-child(even) { background: color-mix(in srgb, var(--border) 40%, transparent); }
 
 .overlay .panel {
-  max-width: 60rem;
-  max-height: 80vh;
+  max-width: min(60rem, calc(100vw - 0.8rem));
+  max-height: 90vh;
+  padding: 0.75rem;
   overflow: auto;
-  padding: 1rem;
   background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--accent);
@@ -658,6 +658,19 @@ aside li:hover {
 
   .statusbar a[aria-label="github"] {
     display: none;
+  }
+
+  .about .diagram {
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+
+  .about .diagram img {
+    display: block;
+    margin: 0;
+    width: 100%;
+    height: auto;
+    min-width: 0;
   }
 
   .layout > main {
